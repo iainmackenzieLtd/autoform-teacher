@@ -54,9 +54,9 @@ def review_and_approve(form_path, profile_path):
         print(f"  {label} → {display}")
 
     print("\n" + "=" * 60)
-    confirm = input("\nType YES to approve and proceed, or anything else to cancel: ").strip()
+    confirm = input("\nType YES (or y) to approve and proceed, or anything else to cancel: ").strip().lower()
 
-    if confirm != "YES":
+    if confirm not in ("yes", "y"):
         print("\nCancelled. Nothing has been submitted or changed.")
         sys.exit(0)
 
