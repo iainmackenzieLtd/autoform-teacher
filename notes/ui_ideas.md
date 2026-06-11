@@ -25,3 +25,22 @@ Before anything is submitted, a decision agent should sit between the mapper and
 - Require explicit user approval before the filler runs
 
 This is the safety layer. Nothing gets submitted without the user seeing and confirming the full mapping first.
+
+---
+
+## Architecture principle: code over instructions for safety
+
+**Key insight:** There is a fundamental difference between a rule written in a markdown file (or a prompt) and a rule enforced in code.
+
+- **Instructions** (CLAUDE.md, prompts) — shape behaviour but cannot guarantee it. An LLM may drift, especially under pace. Unpredictable by nature.
+- **Code** — structural. If the filler requires a confirmed approval object from the decision agent as a literal input, it cannot run without it. No drift possible.
+
+**How to apply this to the form filler:**
+- The decision agent must not be optional — make it a required step in the pipeline, enforced in code
+- The filler receives a signed/structured approval object, not just a verbal "yes"
+- Log every approval with a timestamp — not just "it was checked" but a record of exactly what was confirmed
+- Write tests that verify the filler cannot bypass the decision agent
+
+**The principle:** Don't trust an agent to remember the rules. Make the rules structural so they cannot be bypassed even if the agent drifts.
+
+This distinction — instruction vs code — is one of the most important concepts in building trustworthy AI systems.
