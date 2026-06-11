@@ -26,6 +26,15 @@ Before anything is submitted, a decision agent should sit between the mapper and
 
 This is the safety layer. Nothing gets submitted without the user seeing and confirming the full mapping first.
 
+### Field explanations — don't just show the field name
+
+When asking the user to fill in a gap, the decision agent should explain what the form is actually asking for — not just relay the raw field label.
+
+Bad: `Profile *:`
+Good: `The form is asking for a short professional summary — who you are, your experience, and what you're looking for. A paragraph is fine.`
+
+This requires a Claude API call to interpret the field in context. It's the difference between a confusing prompt and a helpful one. Essential for non-technical users.
+
 ---
 
 ## Architecture principle: code over instructions for safety
