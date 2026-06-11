@@ -13,3 +13,15 @@ Send the user a prompt (email or in-app) once a month asking if their profile ne
 
 ### Why this matters
 Users are handing over sensitive personal data. Showing them what is stored, and checking in regularly, builds trust and keeps the profile accurate. Good data governance by design, not as an afterthought.
+
+---
+
+## Decision agent — checking before submitting
+
+Before anything is submitted, a decision agent should sit between the mapper and the filler:
+
+- Show the user what the mapper has matched: "I'm about to fill these fields with this data — is that right?"
+- Flag anything uncertain: "I wasn't sure what to put for Key Skill 1 — can you confirm?"
+- Require explicit user approval before the filler runs
+
+This is the safety layer. Nothing gets submitted without the user seeing and confirming the full mapping first.
