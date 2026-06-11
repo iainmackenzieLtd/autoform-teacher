@@ -10,3 +10,4 @@ A learning sandbox for exploring Claude Code.
 - Always run `git diff` after any edit and show the output
 - Never push to remote without explicit instruction
 - Ask before deleting any file
+- When asking for permission or confirmation, always include a plain English explanation of what the action does, why it is needed, and what could go wrong — so the user can make an informed decision
