@@ -1,2 +1,6 @@
 profile/user_profile.json
 profile/approval.json
+Iain CV/
+__pycache__/
+**/__pycache__/
+*.pyc
