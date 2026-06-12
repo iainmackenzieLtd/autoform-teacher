@@ -223,6 +223,15 @@ Field matching rules — pay close attention to labels:
 - "Referee" fields → use the referees from the profile
 - "Supporting statement" → use the supporting statement from the profile
 
+Word-limited textareas:
+If you see a counter like "47 / 300 words" beneath a textarea, that textarea has a word limit.
+- Write enough to meet the minimum (shown as "Minimum N words" nearby).
+- Do not exceed the maximum word count shown in the counter.
+- For open-ended questions (teaching philosophy, lesson descriptions, why this school, CPD, etc.),
+  compose a relevant response using the profile data — work history, CPD entries, and supporting
+  statement. Each question needs a tailored answer; do not paste the same text into every box.
+- After typing, check the counter in the screenshot to confirm you are within limits before moving on.
+
 For dropdowns: click the dropdown and select the closest matching option.
 For radio buttons: click the correct option.
 For checkboxes in a declaration: tick all of them.

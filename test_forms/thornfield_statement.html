@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thornfield Primary School — Supporting Statement</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      background: #f3f0f7;
+      color: #222;
+    }
+
+    header {
+      background: #5b2d8e;
+      color: white;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .logo {
+      width: 52px; height: 52px;
+      background: #7b4db5;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: bold;
+    }
+    header h1 { font-size: 20px; }
+    header p  { font-size: 12px; opacity: 0.8; margin-top: 3px; }
+
+    .notice {
+      background: #fff3cd; border-left: 4px solid #e6a817;
+      padding: 10px 40px; font-size: 13px; color: #5a4000;
+    }
+
+    .intro-bar {
+      background: #ede8f5; border-bottom: 1px solid #c9b8e8;
+      padding: 14px 40px; font-size: 13px; color: #4a2070;
+    }
+    .intro-bar strong { display: block; font-size: 14px; margin-bottom: 3px; }
+
+    .container {
+      max-width: 820px;
+      margin: 28px auto;
+      background: white;
+      padding: 36px 40px;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      font-size: 15px;
+      color: #5b2d8e;
+      border-bottom: 2px solid #5b2d8e;
+      padding-bottom: 6px;
+      margin: 28px 0 16px;
+    }
+    h2:first-child { margin-top: 0; }
+
+    .form-group { margin-bottom: 24px; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: #333;
+    }
+    label .req { color: #c0392b; margin-left: 2px; }
+    label .guidance {
+      display: block;
+      font-weight: normal;
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    textarea {
+      width: 100%;
+      border: 1px solid #bbb;
+      border-radius: 3px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #5b2d8e;
+      box-shadow: 0 0 0 2px rgba(91,45,142,0.15);
+    }
+
+    .counter-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 4px;
+      gap: 12px;
+    }
+    .word-counter {
+      font-size: 12px;
+      font-weight: bold;
+      color: #888;
+      transition: color 0.2s;
+    }
+    .word-counter.warn  { color: #d97706; }
+    .word-counter.over  { color: #c0392b; }
+    .word-counter.good  { color: #2c7a2c; }
+
+    .progress-strip {
+      height: 3px;
+      background: #e8e0f4;
+      border-radius: 2px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: #5b2d8e;
+      transition: width 0.15s, background 0.2s;
+    }
+
+    .min-note {
+      font-size: 11px;
+      color: #999;
+    }
+
+    .submit-area {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid #5b2d8e;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .submit-note {
+      font-size: 13px;
+      color: #666;
+      max-width: 480px;
+    }
+    .btn-submit {
+      background: #5b2d8e;
+      color: white;
+      border: none;
+      padding: 12px 36px;
+      font-size: 15px;
+      border-radius: 3px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-submit:hover { background: #7b4db5; }
+
+    .confirmation {
+      display: none;
+      background: #d4edda; border: 1px solid #28a745;
+      border-radius: 4px; padding: 16px; margin-top: 20px; color: #155724;
+    }
+
+    footer {
+      text-align: center; padding: 20px;
+      font-size: 12px; color: #999;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">T</div>
+  <div>
+    <h1>Thornfield Primary School</h1>
+    <p>Supporting Statement Form — please complete all sections</p>
+  </div>
+</header>
+
+<div class="notice">
+  &#9432; This is a <strong>synthetic test form</strong> — AutoForm development only. No data is submitted.
+</div>
+
+<div class="intro-bar">
+  <strong>Application for: Class Teacher (KS2) — September 2026</strong>
+  Please answer each question in your own words. Word limits are shown beneath each box.
+  Responses significantly under the minimum word count will not be considered.
+</div>
+
+<div class="container">
+
+  <!-- ══════════════════════════════════════════
+       SECTION 1 — ABOUT YOU
+  ══════════════════════════════════════════ -->
+  <h2>Section 1: About You as a Teacher</h2>
+
+  <div class="form-group">
+    <label for="q1">
+      Teaching philosophy and approach <span class="req">*</span>
+      <span class="guidance">
+        Describe your teaching philosophy and your approach to helping all pupils achieve their potential.
+        How do you ensure every child in your class is engaged and making progress?
+      </span>
+    </label>
+    <textarea id="q1" name="q1" rows="9"
+      oninput="updateCounter('q1','c1',300,80)"
+      placeholder="Write your response here…"></textarea>
+    <div class="progress-strip"><div class="progress-fill" id="p1"></div></div>
+    <div class="counter-row">
+      <span class="min-note">Minimum 80 words</span>
+      <span class="word-counter" id="c1">0 / 300 words</span>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="q2">
+      A lesson you are proud of <span class="req">*</span>
+      <span class="guidance">
+        Describe a lesson or sequence of lessons you are particularly proud of.
+        What was the learning objective? What strategies did you use? What was the outcome?
+      </span>
+    </label>
+    <textarea id="q2" name="q2" rows="8"
+      oninput="updateCounter('q2','c2',250,60)"
+      placeholder="Write your response here…"></textarea>
+    <div class="progress-strip"><div class="progress-fill" id="p2"></div></div>
+    <div class="counter-row">
+      <span class="min-note">Minimum 60 words</span>
+      <span class="word-counter" id="c2">0 / 250 words</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 2 — WHY THORNFIELD
+  ══════════════════════════════════════════ -->
+  <h2>Section 2: Why Thornfield School?</h2>
+
+  <div class="form-group">
+    <label for="q3">
+      Why are you applying to Thornfield? <span class="req">*</span>
+      <span class="guidance">
+        What specifically attracted you to this post at Thornfield Primary School?
+        Please refer to the school's values or ethos where relevant.
+      </span>
+    </label>
+    <textarea id="q3" name="q3" rows="7"
+      oninput="updateCounter('q3','c3',200,50)"
+      placeholder="Write your response here…"></textarea>
+    <div class="progress-strip"><div class="progress-fill" id="p3"></div></div>
+    <div class="counter-row">
+      <span class="min-note">Minimum 50 words</span>
+      <span class="word-counter" id="c3">0 / 200 words</span>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="q4">
+      Contribution to the school community <span class="req">*</span>
+      <span class="guidance">
+        Beyond classroom teaching, what would you contribute to the wider life of Thornfield School?
+        Think about clubs, CPD, pastoral support, or other responsibilities.
+      </span>
+    </label>
+    <textarea id="q4" name="q4" rows="7"
+      oninput="updateCounter('q4','c4',200,50)"
+      placeholder="Write your response here…"></textarea>
+    <div class="progress-strip"><div class="progress-fill" id="p4"></div></div>
+    <div class="counter-row">
+      <span class="min-note">Minimum 50 words</span>
+      <span class="word-counter" id="c4">0 / 200 words</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 3 — PROFESSIONAL DEVELOPMENT
+  ══════════════════════════════════════════ -->
+  <h2>Section 3: Professional Development</h2>
+
+  <div class="form-group">
+    <label for="q5">
+      Recent CPD or professional development <span class="req">*</span>
+      <span class="guidance">
+        Describe the most significant professional development activity you have undertaken
+        in the last two years. What did you learn, and how has it changed your practice?
+      </span>
+    </label>
+    <textarea id="q5" name="q5" rows="7"
+      oninput="updateCounter('q5','c5',200,40)"
+      placeholder="Write your response here…"></textarea>
+    <div class="progress-strip"><div class="progress-fill" id="p5"></div></div>
+    <div class="counter-row">
+      <span class="min-note">Minimum 40 words</span>
+      <span class="word-counter" id="c5">0 / 200 words</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 4 — ADDITIONAL INFORMATION
+  ══════════════════════════════════════════ -->
+  <h2>Section 4: Additional Information</h2>
+
+  <div class="form-group">
+    <label for="q6">
+      Anything else you would like us to know?
+      <span class="guidance">
+        Optional. Use this space for any information not covered elsewhere in your application —
+        for example, gaps in employment, a disability or adjustment request, or other context.
+      </span>
+    </label>
+    <textarea id="q6" name="q6" rows="5"
+      oninput="updateCounter('q6','c6',150,0)"
+      placeholder="Optional — leave blank if not applicable."></textarea>
+    <div class="progress-strip"><div class="progress-fill" id="p6"></div></div>
+    <div class="counter-row">
+      <span class="min-note">Optional</span>
+      <span class="word-counter" id="c6">0 / 150 words</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SUBMIT
+  ══════════════════════════════════════════ -->
+  <div class="submit-area">
+    <p class="submit-note">
+      By submitting this form you confirm that all information provided is accurate.
+      This statement will be read alongside your main application.
+    </p>
+    <button class="btn-submit" onclick="handleSubmit()">Submit Statement</button>
+  </div>
+
+  <div class="confirmation" id="confirmation">
+    &#10003; <strong>Test submission recorded.</strong>
+    No data was sent anywhere — this is a synthetic test form for AutoForm development.
+  </div>
+
+</div>
+
+<footer>
+  Thornfield Primary School &mdash; synthetic test form &mdash; AutoForm project
+</footer>
+
+<script>
+  function countWords(text) {
+    return text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+  }
+
+  function updateCounter(textareaId, counterId, maxWords, minWords) {
+    const text    = document.getElementById(textareaId).value;
+    const words   = countWords(text);
+    const counter = document.getElementById(counterId);
+    const fill    = document.getElementById('p' + counterId.slice(1));
+
+    counter.textContent = words + ' / ' + maxWords + ' words';
+
+    const pct = Math.min(words / maxWords, 1);
+    fill.style.width = (pct * 100) + '%';
+
+    counter.className = 'word-counter';
+    if (words > maxWords) {
+      counter.classList.add('over');
+      fill.style.background = '#c0392b';
+    } else if (words > maxWords * 0.85) {
+      counter.classList.add('warn');
+      fill.style.background = '#d97706';
+    } else if (words >= minWords) {
+      counter.classList.add('good');
+      fill.style.background = '#2c7a2c';
+    } else {
+      fill.style.background = '#5b2d8e';
+    }
+  }
+
+  function handleSubmit() {
+    document.getElementById('confirmation').style.display = 'block';
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
