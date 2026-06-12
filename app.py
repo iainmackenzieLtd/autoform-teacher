@@ -109,7 +109,7 @@ progress_bar = st.progress(0, text="Ready — waiting to launch")
 status_line  = st.empty()
 
 # Two-column layout: step counter (large) | model + token info (small)
-col_step, col_gap, col_info = st.columns([2, 1, 3])
+col_step, col_info = st.columns([1, 2])
 
 with col_step:
     step_slot = st.empty()
