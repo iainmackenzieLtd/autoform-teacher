@@ -159,6 +159,9 @@ Example response:
     steps_taken = 0
 
     for step in range(max_steps):
+        if on_step:
+            on_step(step + 1, "Taking screenshot and thinking…")
+
         screenshot_data = _screenshot(page)
 
         response = _client.messages.create(
