@@ -246,6 +246,21 @@ if st.session_state.get("agent_run"):
         _redraw_panels(running=False)
 
         # ── Completion panels ─────────────────────────────────────────────────
+        # Light up the "What to do next" box — updated outside completion_slot
+        # so it replaces the dimmed placeholder in its original position
+        with next_slot.container(border=True):
+            st.markdown(
+                "<div style='background:#fff8e1;padding:4px 0 2px;border-radius:3px'>"
+                "<strong style='font-size:1.05rem'>&#10003; What to do next</strong>"
+                "</div>",
+                unsafe_allow_html=True
+            )
+            st.write(
+                "1. Switch to the form window and scroll through every field.\n"
+                "2. Complete any fields that were left blank.\n"
+                "3. When you are satisfied, click **Submit Application**."
+            )
+
         with completion_slot.container():
             st.divider()
 
@@ -259,14 +274,6 @@ if st.session_state.get("agent_run"):
                 st.warning(
                     f"Agent reached the step limit ({n_steps} steps) without signalling done. "
                     "The form may be partially complete."
-                )
-
-            with next_slot.container(border=True):
-                st.markdown("**What to do next**")
-                st.write(
-                    "1. Scroll through the form in the browser window and check every field.\n"
-                    "2. Complete any fields that were left blank.\n"
-                    "3. When you are satisfied, click **Submit Application**."
                 )
 
             with st.expander("Agent activity log"):
