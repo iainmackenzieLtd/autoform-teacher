@@ -5,6 +5,7 @@ Run with: streamlit run app.py
 
 import sys
 import os
+import glob
 import streamlit as st
 from playwright.sync_api import sync_playwright
 
@@ -12,8 +13,17 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from run_live import load_profile
 from agents.form_agent import run_form_agent
 
-PROFILE_PATH      = "profile/user_profile.json"
-MOCK_PROFILE_PATH = "profile/mock_profile.json"
+PROFILE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "profile")
+
+
+def discover_profiles():
+    """Return {display_name: file_path} for every JSON in the profile folder."""
+    profiles = {}
+    for path in sorted(glob.glob(os.path.join(PROFILE_DIR, "*.json"))):
+        stem = os.path.splitext(os.path.basename(path))[0]
+        display = stem.replace("_", " ").title()
+        profiles[display] = path
+    return profiles
 
 # ── Page setup ────────────────────────────────────────────────────────────────
 st.set_page_config(page_title="AutoForm", layout="wide")
@@ -23,10 +33,12 @@ st.caption("Fill any job application form from your profile — automatically.")
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.header("Your Profile")
-    use_mock = st.toggle("Use mock profile (for testing)", value=False)
-    profile = load_profile(MOCK_PROFILE_PATH if use_mock else PROFILE_PATH)
-    if use_mock:
-        st.caption("⚠️ Using fictional test profile — Alex Morgan")
+    available = discover_profiles()
+    if not available:
+        st.error("No profiles found in the profile/ folder.")
+        st.stop()
+    selected_name = st.selectbox("Select profile", list(available.keys()))
+    profile = load_profile(available[selected_name])
     p = profile["personal"]
     st.markdown(f"### {p['full_name']}")
     st.write(p["email"])
