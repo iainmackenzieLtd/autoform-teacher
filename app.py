@@ -234,7 +234,10 @@ if st.session_state.get("agent_run"):
             text="Complete" if is_done else f"Step {n} of up to {MAX_STEPS}"
         )
         if is_done:
-            status_line.empty()
+            status_line.caption(
+                "✓ Agent finished — review the form in the browser window, "
+                "submit it, then close the window when done."
+            )
             _redraw_panels(running=False)
         elif "screenshot" not in desc.lower():
             status_line.caption(f"↳ {desc}")
@@ -254,6 +257,9 @@ if st.session_state.get("agent_run"):
         st.caption("claude-opus-4-8")
         st.caption("**Tokens sent**  |  **Est. cost**")
         st.caption("—  |  —")
+
+    _agent_done  = False
+    _agent_error = None
 
     try:
         with sync_playwright() as pw:
@@ -278,8 +284,6 @@ if st.session_state.get("agent_run"):
                     pass
             browser.close()
 
-        # Store result — rerun is called outside the try block so RerunException
-        # is not accidentally caught here
         st.session_state.agent_result = {
             "n_steps":     n_steps,
             "completed":   completed,
@@ -288,11 +292,15 @@ if st.session_state.get("agent_run"):
             "tok_out":     tok_out,
             "steps_log":   steps_log,
         }
+        _agent_done = True
 
     except Exception as e:
-        status_line.empty()
-        st.error(f"Agent error: {e}")
+        _agent_error = str(e)
 
-    else:
-        # Only rerun on success — outside the try block so RerunException propagates freely
+    # Both branches are outside the try block — no exception can interfere
+    if _agent_error:
+        status_line.empty()
+        st.error(f"Agent error: {_agent_error}")
+
+    if _agent_done:
         st.rerun()
