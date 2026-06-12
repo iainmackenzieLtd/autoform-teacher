@@ -114,6 +114,8 @@ if read_clicked:
             st.session_state.mapped = mapped
             st.session_state.url = url
             st.session_state.pop("explanations", None)
+            st.session_state.pop("gap_index", None)
+            st.session_state.gap_answers = {}
             webbrowser.open_new_tab(url)
         except Exception as e:
             st.error(f"Could not read form: {e}")
@@ -121,40 +123,103 @@ if read_clicked:
 # ── Step 2: Review mapping ────────────────────────────────────
 if "mapped" in st.session_state:
     mapped = st.session_state.mapped
-    matched = [f for f in mapped if f["status"] == "mapped"]
-    gaps = [f for f in mapped if f["status"] == "NEEDS USER INPUT"]
+    matched  = [f for f in mapped if f["status"] == "mapped"]
+    gaps     = [f for f in mapped if f["status"] == "NEEDS USER INPUT"]
+    overflow = [f for f in mapped if f["status"] == "OVERFLOW"]
 
     st.divider()
-    st.subheader(f"Step 2 — Review mapping")
+    st.subheader("Step 2 — Review mapping")
 
     col1, col2 = st.columns(2)
 
     with col1:
         st.markdown(f"**✓ {len(matched)} fields matched from your profile**")
+        if overflow:
+            st.caption(f"{len(overflow)} extra form slots left blank — the form has more rows than your profile needs.")
         for f in matched:
             label = f["label"] or f["id"] or ""
             st.markdown(f"**{label}**")
             st.caption(str(f["value"])[:100])
 
     with col2:
-        st.markdown(f"**⚠️ {len(gaps)} fields need your input**")
+        if not gaps:
+            st.markdown("**✓ No gaps — everything matched**")
+        else:
+            st.markdown(f"**⚠️ {len(gaps)} fields need your input**")
 
-        if gaps and "explanations" not in st.session_state:
-            with st.spinner("Getting AI explanations for each field..."):
-                from concurrent.futures import ThreadPoolExecutor
-                def _explain(f):
-                    return f["id"], explain_field(f["label"] or f["id"] or "")
-                with ThreadPoolExecutor(max_workers=10) as pool:
-                    st.session_state.explanations = dict(pool.map(_explain, gaps))
+            if "explanations" not in st.session_state:
+                with st.spinner("Getting AI explanations..."):
+                    from concurrent.futures import ThreadPoolExecutor
+                    def _explain(f):
+                        return f["id"], explain_field(f["label"] or f["id"] or "")
+                    with ThreadPoolExecutor(max_workers=10) as pool:
+                        st.session_state.explanations = dict(pool.map(_explain, gaps))
 
-        for f in gaps:
-            label = f["label"] or f["id"] or ""
-            explanation = st.session_state.get("explanations", {}).get(f["id"], "")
-            if explanation:
-                st.caption(f"💡 {explanation}")
-            key = f"gap_{f['id']}"
-            val = st.text_area(label, key=key, height=68)
-            f["value"] = val if val.strip() else None
+            if "gap_index" not in st.session_state:
+                st.session_state.gap_index = 0
+            if "gap_answers" not in st.session_state:
+                st.session_state.gap_answers = {}
+
+            idx = st.session_state.gap_index
+            answers = st.session_state.gap_answers
+
+            if idx >= len(gaps):
+                st.success(f"All {len(gaps)} gaps reviewed — scroll down to Step 3.")
+                answered = sum(1 for a in answers.values() if a.strip())
+                st.caption(f"{answered} answered · {len(gaps) - answered} skipped")
+                if st.button("← Review again"):
+                    st.session_state.gap_index = 0
+                    st.rerun()
+            else:
+                f = gaps[idx]
+                label = f["label"] or f["id"] or ""
+                explanation = st.session_state.get("explanations", {}).get(f["id"], "")
+
+                st.progress(idx / len(gaps))
+                st.caption(f"**{idx + 1} of {len(gaps)}** — {label}")
+
+                if explanation:
+                    st.info(f"💡 {explanation}")
+
+                current_val = answers.get(f["id"], "")
+                typed = st.text_area(
+                    label,
+                    value=current_val,
+                    height=100,
+                    label_visibility="collapsed",
+                    placeholder="Type your answer here, or click Skip"
+                )
+                st.components.v1.html(
+                    "<script>setTimeout(()=>{"
+                    "const t=window.parent.document.querySelector('textarea');"
+                    "if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}"
+                    "},120);</script>",
+                    height=0
+                )
+
+                c_back, c_skip, c_next = st.columns([1, 1, 2])
+                with c_back:
+                    if idx > 0 and st.button("← Back"):
+                        answers[f["id"]] = typed
+                        st.session_state.gap_index -= 1
+                        st.rerun()
+                with c_skip:
+                    if st.button("Skip →"):
+                        answers[f["id"]] = ""
+                        st.session_state.gap_index += 1
+                        st.rerun()
+                with c_next:
+                    if st.button("Save & Next →", type="primary"):
+                        answers[f["id"]] = typed
+                        st.session_state.gap_index += 1
+                        st.rerun()
+
+    # Sync saved answers into mapped before Step 3
+    answers = st.session_state.get("gap_answers", {})
+    for f in mapped:
+        if f["status"] == "NEEDS USER INPUT":
+            saved = answers.get(f["id"], "")
+            f["value"] = saved.strip() if saved and saved.strip() else None
 
     # ── Step 3: Approve fields ────────────────────────────────
     st.divider()
