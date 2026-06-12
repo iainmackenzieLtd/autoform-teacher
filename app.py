@@ -16,28 +16,29 @@ from agents.field_explainer import explain_field
 PROFILE_PATH = "profile/user_profile.json"
 
 
-def fill_live(url, mapped_fields):
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        page = browser.new_page()
-        page.goto(url, wait_until="networkidle")
-        filled = 0
-        skipped = 0
-        for field in mapped_fields:
-            fid = field["id"]
-            value = field["value"]
-            if not value:
-                skipped += 1
-                continue
-            locator = page.locator(f"#{fid}")
-            if locator.count() == 0:
-                skipped += 1
-                continue
-            locator.fill(str(value))
-            filled += 1
-        page.wait_for_timeout(60000)
-        browser.close()
-        return filled, skipped
+def fill_live(page, mapped_fields):
+    filled = 0
+    skipped = 0
+    for field in mapped_fields:
+        if page.is_closed():
+            break
+        fid = field["id"]
+        value = field["value"]
+        if not value:
+            skipped += 1
+            continue
+        locator = page.locator(f"#{fid}")
+        if locator.count() == 0:
+            skipped += 1
+            continue
+        locator.fill(str(value))
+        filled += 1
+    if not page.is_closed():
+        try:
+            page.wait_for_event("close", timeout=0)
+        except Exception:
+            pass
+    return filled, skipped
 
 
 # ── Page setup ──────────────────────────────────────────────
@@ -78,15 +79,27 @@ url = st.text_input(
 )
 
 if st.button("Read Form", type="primary"):
-    with st.spinner("Opening form and reading fields..."):
+    # Close any previously opened form browser
+    if "form_browser" in st.session_state:
         try:
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
-                page = browser.new_page()
-                page.goto(url, wait_until="networkidle")
-                raw_fields = fetch_fields(page)
-                browser.close()
+            st.session_state.form_browser.close()
+            st.session_state.form_pw.stop()
+        except Exception:
+            pass
+        for k in ("form_pw", "form_browser", "form_page"):
+            st.session_state.pop(k, None)
+
+    with st.spinner("Opening form..."):
+        try:
+            pw = sync_playwright().start()
+            browser = pw.chromium.launch(headless=False)
+            page = browser.new_page()
+            page.goto(url, wait_until="networkidle")
+            raw_fields = fetch_fields(page)
             mapped = map_fields(raw_fields, profile)
+            st.session_state.form_pw = pw
+            st.session_state.form_browser = browser
+            st.session_state.form_page = page
             st.session_state.mapped = mapped
             st.session_state.url = url
             st.session_state.pop("explanations", None)
@@ -116,10 +129,11 @@ if "mapped" in st.session_state:
 
         if gaps and "explanations" not in st.session_state:
             with st.spinner("Getting AI explanations for each field..."):
-                st.session_state.explanations = {
-                    f["id"]: explain_field(f["label"] or f["id"] or "")
-                    for f in gaps
-                }
+                from concurrent.futures import ThreadPoolExecutor
+                def _explain(f):
+                    return f["id"], explain_field(f["label"] or f["id"] or "")
+                with ThreadPoolExecutor(max_workers=10) as pool:
+                    st.session_state.explanations = dict(pool.map(_explain, gaps))
 
         for f in gaps:
             label = f["label"] or f["id"] or ""
@@ -133,12 +147,24 @@ if "mapped" in st.session_state:
     # ── Step 3: Fill ──────────────────────────────────────────
     st.divider()
     st.subheader("Step 3 — Fill the form")
-    st.info("A browser window will open, fill the form, and stay open for 60 seconds so you can review it.")
+    st.info("The form is open in the browser window — review it, then click Fill Form. Close the browser window when you are done.")
 
     if st.button("Fill Form", type="primary"):
-        with st.spinner("Filling form in browser..."):
-            try:
-                filled, skipped = fill_live(st.session_state.url, mapped)
-                st.success(f"Done — {filled} fields filled, {skipped} skipped. Check the browser window.")
-            except Exception as e:
-                st.error(f"Error: {e}")
+        page = st.session_state.get("form_page")
+        if page is None or page.is_closed():
+            st.error("The form browser was closed. Click 'Read Form' to reopen it.")
+        else:
+            with st.spinner("Filling form... close the browser window when done."):
+                try:
+                    filled, skipped = fill_live(page, mapped)
+                    st.success(f"Done — {filled} fields filled, {skipped} skipped.")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+                finally:
+                    try:
+                        st.session_state.form_browser.close()
+                        st.session_state.form_pw.stop()
+                    except Exception:
+                        pass
+                    for k in ("form_pw", "form_browser", "form_page"):
+                        st.session_state.pop(k, None)
