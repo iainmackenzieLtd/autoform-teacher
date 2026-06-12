@@ -1,0 +1,162 @@
+{
+  "version": "0.1",
+  "description": "AutoForm synthetic test fixture set. Each form exercises a distinct pattern found in real teaching job application portals.",
+  "forms": [
+    {
+      "file": "meadowfield_single_page.html",
+      "name": "Meadowfield Primary School",
+      "purpose": "Baseline single long-page application — personal details, employment, education, referees, declaration.",
+      "expected_challenges": [
+        "scrolling to reach all fields",
+        "dropdown selection",
+        "radio buttons",
+        "checkbox declarations"
+      ],
+      "should_not_do": [
+        "submit the form",
+        "invent data not in the profile",
+        "re-fill fields already completed"
+      ],
+      "pass_criteria": [
+        "fills all personal detail fields from profile",
+        "selects sensible dropdown values",
+        "scrolls to bottom and fills declaration",
+        "signals done without clicking Submit"
+      ]
+    },
+    {
+      "file": "college_portal.html",
+      "name": "Northgate College",
+      "purpose": "Accordion-navigation portal — agent must click section tabs to reveal each panel, then Save Section before moving on.",
+      "expected_challenges": [
+        "section navigation via sidebar buttons",
+        "Save Section button between panels",
+        "supporting statement (long textarea)",
+        "referee details",
+        "declaration checkbox"
+      ],
+      "should_not_do": [
+        "skip sections without filling them",
+        "click the final Submit without all sections saved",
+        "invent referee contact details not in profile"
+      ],
+      "pass_criteria": [
+        "visits every section panel",
+        "fills personal details, employment, education, CPD, referees",
+        "writes a supporting statement",
+        "ticks the declaration checkbox and enters the date",
+        "does not submit the form"
+      ]
+    },
+    {
+      "file": "bridgewater_wizard.html",
+      "name": "Bridgewater Academy",
+      "purpose": "Multi-step wizard with Next/Back buttons — agent must advance through pages and only signal done on the final page.",
+      "expected_challenges": [
+        "multi-page navigation via Next button",
+        "remembering previous-page context",
+        "word-limited textareas on later pages",
+        "declaration checkboxes on final page"
+      ],
+      "should_not_do": [
+        "signal done before reaching the final page",
+        "click Submit",
+        "exceed word limits in textareas"
+      ],
+      "pass_criteria": [
+        "advances through all wizard pages",
+        "fills fields on each page",
+        "stays within word limits",
+        "ticks all declaration checkboxes",
+        "signals done only after completing the final page"
+      ]
+    },
+    {
+      "file": "thornfield_statement.html",
+      "name": "Thornfield Grammar School",
+      "purpose": "Supporting-statement heavy form — six word-limited textareas each requiring a tailored response.",
+      "expected_challenges": [
+        "word counters (minimum and maximum)",
+        "composing tailored text per question",
+        "staying within min/max word limits",
+        "verifying counter after typing"
+      ],
+      "should_not_do": [
+        "paste the same text into every textarea",
+        "exceed the maximum word count",
+        "submit the form"
+      ],
+      "pass_criteria": [
+        "fills all six textareas with distinct tailored text",
+        "meets the minimum word count for each",
+        "does not exceed the maximum",
+        "signals done without submitting"
+      ]
+    },
+    {
+      "file": "harlington_conditional.html",
+      "name": "Harlington Community School",
+      "purpose": "Conditional fields — radio button answers reveal or hide additional panels that must then be filled.",
+      "expected_challenges": [
+        "radio buttons that trigger show/hide of dependent fields",
+        "recognising newly revealed fields after a click",
+        "not filling hidden fields"
+      ],
+      "should_not_do": [
+        "attempt to fill fields that are still hidden",
+        "skip a revealed conditional panel",
+        "submit the form"
+      ],
+      "pass_criteria": [
+        "answers all radio buttons correctly",
+        "identifies and fills each revealed conditional panel",
+        "ignores fields that remain hidden",
+        "signals done without submitting"
+      ]
+    },
+    {
+      "file": "portside_login.html",
+      "name": "Portside College",
+      "purpose": "Login-gated portal — agent reads demo credentials from the screen, logs in, then fills the application form.",
+      "expected_challenges": [
+        "login screen before the application form",
+        "reading credentials from on-screen hint",
+        "form pre-fills email after login"
+      ],
+      "should_not_do": [
+        "halt on the login screen",
+        "invent a password not shown on screen",
+        "submit the form after filling it"
+      ],
+      "pass_criteria": [
+        "reads demo credentials from the hint box",
+        "logs in successfully",
+        "fills all application fields post-login",
+        "signals done without submitting"
+      ]
+    },
+    {
+      "file": "westfield_validation.html",
+      "name": "Westfield Academy",
+      "purpose": "Inline format validation — fields turn green/red on blur; Submit stays disabled until all pass.",
+      "expected_challenges": [
+        "UK phone number format (07xxx)",
+        "DD/MM/YYYY date format",
+        "UK postcode format",
+        "NI number format (AB 12 34 56 C)",
+        "Submit button disabled until all valid"
+      ],
+      "should_not_do": [
+        "enter data in wrong formats",
+        "attempt to click a disabled Submit button",
+        "submit the form"
+      ],
+      "pass_criteria": [
+        "enters all fields in the correct UK formats",
+        "all validation icons show green",
+        "Submit button becomes enabled",
+        "signals done without clicking Submit"
+      ]
+    }
+  ]
+}

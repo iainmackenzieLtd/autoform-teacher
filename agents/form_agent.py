@@ -249,8 +249,14 @@ If the form has multiple pages (you see a "Next", "Next Page", or "Continue" but
 fill all visible fields on the current page, then click that button to advance.
 Only return done when you have completed the final page and there are no more pages to fill.
 
-When you have completed the entire form, return:
-[{{"action": "done", "reason": "Form filled. Please review all fields carefully, then click Submit when you are ready to apply."}}]
+When you have completed the entire form, return a done action that includes two extra arrays:
+- "fields_filled": one string per field you filled, e.g. "Title: Mr", "Full name: Alex Morgan"
+- "fields_skipped": one string per field you left blank and why, e.g. "Middle name: not in profile", "Covering letter: no supporting statement data"
+
+Example:
+[{{"action": "done", "reason": "Form filled. Please review all fields carefully, then click Submit when you are ready to apply.", "fields_filled": ["Title: Mr", "Full name: Alex Morgan", "Email: alex.morgan@example.com"], "fields_skipped": ["Middle name: not in profile"]}}]
+
+If all visible fields were filled, fields_skipped may be an empty array.
 
 Return ONLY a JSON array — no explanation, no markdown, just the array.
 
@@ -260,7 +266,7 @@ Available actions:
   {{"action": "select_option", "x": <int>, "y": <int>, "value": "<option text to select>"}}
   {{"action": "scroll_down"}}
   {{"action": "key", "key": "<Tab|Enter|Escape>"}}
-  {{"action": "done", "reason": "<message for the user>"}}
+  {{"action": "done", "reason": "<message for the user>", "fields_filled": [...], "fields_skipped": [...]}}
 
 IMPORTANT: For any <select> dropdown, ALWAYS use select_option — never click to open a dropdown.
 The select_option action sets the value directly and reliably without opening a visual menu."""
@@ -269,6 +275,8 @@ The select_option action sets the value directly and reliably without opening a 
     steps_taken = 0
     completed = False
     done_reason = ""
+    fields_filled = []
+    fields_skipped = []
     total_input_tokens = 0
     total_output_tokens = 0
 
@@ -341,12 +349,13 @@ The select_option action sets the value directly and reliably without opening a 
 
         if done:
             completed = True
-            # Capture the reason from the done action for the UI
             for act in actions:
                 if act.get("action") == "done":
-                    done_reason = act.get("reason", "")
+                    done_reason     = act.get("reason", "")
+                    fields_filled   = act.get("fields_filled", [])
+                    fields_skipped  = act.get("fields_skipped", [])
             break
 
         page.wait_for_timeout(600)
 
-    return steps_taken, completed, done_reason, total_input_tokens, total_output_tokens
+    return steps_taken, completed, done_reason, total_input_tokens, total_output_tokens, fields_filled, fields_skipped

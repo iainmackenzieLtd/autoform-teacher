@@ -174,6 +174,21 @@ if result:
                 f"Agent reached the step limit ({result['n_steps']} steps) without "
                 "signalling done. The form may be partially complete."
             )
+
+        # Field report
+        filled  = result.get("fields_filled", [])
+        skipped = result.get("fields_skipped", [])
+        if filled or skipped:
+            with st.expander(f"Field report — {len(filled)} filled, {len(skipped)} skipped"):
+                if filled:
+                    st.markdown("**Filled**")
+                    for f in filled:
+                        st.markdown(f"- ✓ {f}")
+                if skipped:
+                    st.markdown("**Left blank / skipped**")
+                    for s in skipped:
+                        st.markdown(f"- ⚠ {s}")
+
         with st.expander("Agent activity log"):
             for s in result["steps_log"]:
                 st.text(s)
@@ -286,7 +301,7 @@ if st.session_state.get("agent_run"):
             ctx  = browser.new_context(viewport={"width": 860, "height": 800})
             page = ctx.new_page()
             page.goto(target_url, wait_until="networkidle")
-            n_steps, completed, done_reason, tok_in, tok_out = run_form_agent(
+            n_steps, completed, done_reason, tok_in, tok_out, fields_filled, fields_skipped = run_form_agent(
                 page, profile,
                 on_step=_on_step,
                 on_tokens=_on_tokens,
@@ -301,12 +316,14 @@ if st.session_state.get("agent_run"):
             browser.close()
 
         st.session_state.agent_result = {
-            "n_steps":     n_steps,
-            "completed":   completed,
-            "done_reason": done_reason,
-            "tok_in":      tok_in,
-            "tok_out":     tok_out,
-            "steps_log":   steps_log,
+            "n_steps":        n_steps,
+            "completed":      completed,
+            "done_reason":    done_reason,
+            "tok_in":         tok_in,
+            "tok_out":        tok_out,
+            "steps_log":      steps_log,
+            "fields_filled":  fields_filled,
+            "fields_skipped": fields_skipped,
         }
         _agent_done = True
 
