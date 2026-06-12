@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harlington Secondary School — Application Form</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      background: #f0f4f4;
+      color: #222;
+    }
+
+    header {
+      background: #1a5c52;
+      color: white;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .logo {
+      width: 52px; height: 52px;
+      background: #267a6e;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: bold;
+    }
+    header h1 { font-size: 20px; }
+    header p  { font-size: 12px; opacity: 0.8; margin-top: 3px; }
+
+    .notice {
+      background: #fff3cd; border-left: 4px solid #e6a817;
+      padding: 10px 40px; font-size: 13px; color: #5a4000;
+    }
+
+    .intro-bar {
+      background: #e6f0ee; border-bottom: 1px solid #b2cfc9;
+      padding: 14px 40px; font-size: 13px; color: #1a5c52;
+    }
+    .intro-bar strong { display: block; font-size: 14px; margin-bottom: 3px; }
+
+    .container {
+      max-width: 820px;
+      margin: 28px auto;
+      background: white;
+      padding: 36px 40px;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      font-size: 15px;
+      color: #1a5c52;
+      border-bottom: 2px solid #1a5c52;
+      padding-bottom: 6px;
+      margin: 28px 0 16px;
+    }
+    h2:first-child { margin-top: 0; }
+
+    .form-group { margin-bottom: 20px; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+    label .req { color: #c0392b; margin-left: 2px; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #bbb;
+      border-radius: 3px;
+      padding: 8px 10px;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #1a5c52;
+      box-shadow: 0 0 0 2px rgba(26,92,82,0.15);
+    }
+    textarea { resize: vertical; line-height: 1.5; }
+
+    .radio-group, .checkbox-group {
+      display: flex;
+      gap: 24px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .radio-group label, .checkbox-group label {
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    /* Conditional reveal panels */
+    .conditional {
+      display: none;
+      background: #f5faf9;
+      border-left: 3px solid #1a5c52;
+      padding: 14px 16px;
+      margin-top: 10px;
+      border-radius: 0 3px 3px 0;
+    }
+    .conditional.visible { display: block; }
+    .conditional .form-group:last-child { margin-bottom: 0; }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .submit-area {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid #1a5c52;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .submit-note {
+      font-size: 13px;
+      color: #666;
+      max-width: 480px;
+    }
+    .btn-submit {
+      background: #1a5c52;
+      color: white;
+      border: none;
+      padding: 12px 36px;
+      font-size: 15px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .btn-submit:hover { background: #267a6e; }
+
+    .confirmation {
+      display: none;
+      background: #d4edda; border: 1px solid #28a745;
+      border-radius: 4px; padding: 16px; margin-top: 20px; color: #155724;
+    }
+
+    footer {
+      text-align: center; padding: 20px;
+      font-size: 12px; color: #999;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #666;
+      font-weight: normal;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">H</div>
+  <div>
+    <h1>Harlington Secondary School</h1>
+    <p>Teaching Application Form — all sections must be completed</p>
+  </div>
+</header>
+
+<div class="notice">
+  &#9432; This is a <strong>synthetic test form</strong> — AutoForm development only. No data is submitted.
+</div>
+
+<div class="intro-bar">
+  <strong>Application for: Teacher of Mathematics — September 2026</strong>
+  Please complete all sections fully. Some questions will reveal additional fields based on your answer.
+</div>
+
+<div class="container">
+
+  <!-- ══════════════════════════════════════════
+       SECTION 1 — PERSONAL DETAILS
+  ══════════════════════════════════════════ -->
+  <h2>Section 1: Personal Details</h2>
+
+  <div class="two-col">
+    <div class="form-group">
+      <label for="title">Title <span class="req">*</span></label>
+      <select id="title" name="title">
+        <option value="">— select —</option>
+        <option>Mr</option>
+        <option>Ms</option>
+        <option>Mrs</option>
+        <option>Miss</option>
+        <option>Dr</option>
+        <option>Mx</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="full_name">Full name <span class="req">*</span></label>
+      <input type="text" id="full_name" name="full_name" placeholder="As it appears on your ID">
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="form-group">
+      <label for="email">Email address <span class="req">*</span></label>
+      <input type="email" id="email" name="email">
+    </div>
+    <div class="form-group">
+      <label for="phone">Phone number <span class="req">*</span></label>
+      <input type="tel" id="phone" name="phone">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="address">Address <span class="req">*</span></label>
+    <input type="text" id="address" name="address" placeholder="Street address">
+  </div>
+
+  <div class="two-col">
+    <div class="form-group">
+      <label for="town">Town / City <span class="req">*</span></label>
+      <input type="text" id="town" name="town">
+    </div>
+    <div class="form-group">
+      <label for="postcode">Postcode <span class="req">*</span></label>
+      <input type="text" id="postcode" name="postcode">
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 2 — TEACHING STATUS
+  ══════════════════════════════════════════ -->
+  <h2>Section 2: Teaching Status</h2>
+
+  <!-- QTS conditional -->
+  <div class="form-group">
+    <label>Do you hold Qualified Teacher Status (QTS)? <span class="req">*</span></label>
+    <div class="radio-group">
+      <label>
+        <input type="radio" name="has_qts" value="yes" onchange="toggle('qts_yes','qts_no','has_qts')"> Yes
+      </label>
+      <label>
+        <input type="radio" name="has_qts" value="no" onchange="toggle('qts_no','qts_yes','has_qts')"> No
+      </label>
+    </div>
+
+    <div class="conditional" id="qts_yes">
+      <div class="form-group">
+        <label for="trn">Teacher Reference Number (TRN) <span class="req">*</span></label>
+        <input type="text" id="trn" name="trn" placeholder="7-digit number">
+      </div>
+    </div>
+
+    <div class="conditional" id="qts_no">
+      <div class="form-group">
+        <label for="qts_stage">What stage of QTS are you at? <span class="req">*</span></label>
+        <select id="qts_stage" name="qts_stage">
+          <option value="">— select —</option>
+          <option>Currently in training (PGCE / School Direct)</option>
+          <option>NQT — induction year</option>
+          <option>Awaiting assessment</option>
+          <option>Overseas qualified — awaiting recognition</option>
+          <option>Not yet started teacher training</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="qts_expected">Expected QTS date (if applicable)</label>
+        <input type="text" id="qts_expected" name="qts_expected" placeholder="e.g. July 2026">
+      </div>
+    </div>
+  </div>
+
+  <!-- Right to work conditional -->
+  <div class="form-group">
+    <label>Do you have the right to work in the UK? <span class="req">*</span></label>
+    <div class="radio-group">
+      <label>
+        <input type="radio" name="rtw" value="yes" onchange="toggle('rtw_yes','rtw_no','rtw')"> Yes
+      </label>
+      <label>
+        <input type="radio" name="rtw" value="no" onchange="toggle('rtw_no','rtw_yes','rtw')"> No
+      </label>
+    </div>
+
+    <div class="conditional" id="rtw_yes">
+      <div class="form-group">
+        <label for="rtw_type">Please confirm your right to work status</label>
+        <select id="rtw_type" name="rtw_type">
+          <option value="">— select —</option>
+          <option>British or Irish citizen</option>
+          <option>Settled status (EU Settlement Scheme)</option>
+          <option>Indefinite leave to remain</option>
+          <option>Skilled Worker visa</option>
+          <option>Other visa / leave</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="conditional" id="rtw_no">
+      <p style="color:#c0392b;font-size:13px;margin-top:4px;">
+        &#9888; We can only employ candidates with the right to work in the UK.
+        Please contact HR before proceeding.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 3 — CURRENT EMPLOYMENT
+  ══════════════════════════════════════════ -->
+  <h2>Section 3: Current Employment</h2>
+
+  <div class="form-group">
+    <label>Are you currently employed in a school or educational setting? <span class="req">*</span></label>
+    <div class="radio-group">
+      <label>
+        <input type="radio" name="currently_employed" value="yes"
+          onchange="toggle('employed_yes','employed_no','currently_employed')"> Yes
+      </label>
+      <label>
+        <input type="radio" name="currently_employed" value="no"
+          onchange="toggle('employed_no','employed_yes','currently_employed')"> No
+      </label>
+    </div>
+
+    <div class="conditional" id="employed_yes">
+      <div class="form-group">
+        <label for="curr_employer">Current employer <span class="req">*</span></label>
+        <input type="text" id="curr_employer" name="curr_employer">
+      </div>
+      <div class="form-group">
+        <label for="curr_role">Current job title <span class="req">*</span></label>
+        <input type="text" id="curr_role" name="curr_role">
+      </div>
+      <div class="form-group">
+        <label for="notice_period">Notice period required <span class="req">*</span></label>
+        <select id="notice_period" name="notice_period">
+          <option value="">— select —</option>
+          <option>None / immediate</option>
+          <option>1 month</option>
+          <option>Half term</option>
+          <option>One term</option>
+          <option>Two terms</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="conditional" id="employed_no">
+      <div class="form-group">
+        <label for="available_from">Date you became available <span class="req">*</span></label>
+        <input type="text" id="available_from" name="available_from" placeholder="DD/MM/YYYY">
+      </div>
+      <div class="form-group">
+        <label for="gap_reason">Brief reason for gap in employment (if applicable)</label>
+        <textarea id="gap_reason" name="gap_reason" rows="3"
+          placeholder="e.g. career break, further study, caring responsibilities — leave blank if not applicable"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 4 — SAFEGUARDING
+  ══════════════════════════════════════════ -->
+  <h2>Section 4: Safeguarding &amp; DBS</h2>
+
+  <div class="form-group">
+    <label>Do you hold a current Enhanced DBS certificate? <span class="req">*</span></label>
+    <div class="radio-group">
+      <label>
+        <input type="radio" name="has_dbs" value="yes"
+          onchange="toggle('dbs_yes','dbs_no','has_dbs')"> Yes
+      </label>
+      <label>
+        <input type="radio" name="has_dbs" value="no"
+          onchange="toggle('dbs_no','dbs_yes','has_dbs')"> No
+      </label>
+    </div>
+
+    <div class="conditional" id="dbs_yes">
+      <div class="form-group">
+        <label for="dbs_number">DBS certificate number <span class="req">*</span></label>
+        <input type="text" id="dbs_number" name="dbs_number" placeholder="12-digit number">
+      </div>
+      <div class="form-group">
+        <label for="dbs_date">Date of issue <span class="req">*</span></label>
+        <input type="text" id="dbs_date" name="dbs_date" placeholder="MM/YYYY">
+      </div>
+      <div class="form-group">
+        <label>Is this certificate registered with the DBS Update Service?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="dbs_update" value="yes"> Yes</label>
+          <label><input type="radio" name="dbs_update" value="no"> No</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="conditional" id="dbs_no">
+      <div class="form-group">
+        <label>Are you willing to apply for an Enhanced DBS check if offered the post? <span class="req">*</span></label>
+        <div class="radio-group">
+          <label><input type="radio" name="dbs_willing" value="yes"> Yes</label>
+          <label><input type="radio" name="dbs_willing" value="no"> No</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overseas residence conditional -->
+  <div class="form-group">
+    <label>Have you lived or worked outside the UK for more than 3 months in the last 5 years? <span class="req">*</span></label>
+    <div class="radio-group">
+      <label>
+        <input type="radio" name="lived_abroad" value="yes"
+          onchange="show('abroad_detail')"> Yes
+      </label>
+      <label>
+        <input type="radio" name="lived_abroad" value="no"
+          onchange="hide('abroad_detail')"> No
+      </label>
+    </div>
+
+    <div class="conditional" id="abroad_detail">
+      <div class="form-group">
+        <label for="abroad_countries">Please give details (countries and approximate dates) <span class="req">*</span></label>
+        <textarea id="abroad_countries" name="abroad_countries" rows="3"
+          placeholder="e.g. Australia, Jan 2022 – Aug 2023"></textarea>
+        <p class="hint">Overseas applicants may be required to provide an overseas police check equivalent.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 5 — EQUAL OPPORTUNITIES
+  ══════════════════════════════════════════ -->
+  <h2>Section 5: Equal Opportunities</h2>
+
+  <div class="form-group">
+    <label>Do you consider yourself to have a disability or long-term health condition? <span class="req">*</span></label>
+    <div class="radio-group">
+      <label>
+        <input type="radio" name="disability" value="yes"
+          onchange="show('disability_detail')"> Yes
+      </label>
+      <label>
+        <input type="radio" name="disability" value="no"
+          onchange="hide('disability_detail')"> No
+      </label>
+      <label>
+        <input type="radio" name="disability" value="prefer_not"
+          onchange="hide('disability_detail')"> Prefer not to say
+      </label>
+    </div>
+
+    <div class="conditional" id="disability_detail">
+      <div class="form-group">
+        <label for="adjustments">
+          Please describe any reasonable adjustments you may require for interview or in the workplace.
+        </label>
+        <textarea id="adjustments" name="adjustments" rows="3"
+          placeholder="e.g. step-free access, extra time, written instructions…"></textarea>
+        <p class="hint">This information will only be used to support you and will not affect your application.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="ethnicity">Ethnic origin (optional)</label>
+    <select id="ethnicity" name="ethnicity">
+      <option value="">— prefer not to say / not listed —</option>
+      <option>White British</option>
+      <option>White Irish</option>
+      <option>White — any other background</option>
+      <option>Mixed — White and Black Caribbean</option>
+      <option>Mixed — White and Black African</option>
+      <option>Mixed — White and Asian</option>
+      <option>Mixed — any other background</option>
+      <option>Asian or Asian British — Indian</option>
+      <option>Asian or Asian British — Pakistani</option>
+      <option>Asian or Asian British — Bangladeshi</option>
+      <option>Asian or Asian British — Chinese</option>
+      <option>Asian or Asian British — any other background</option>
+      <option>Black or Black British — Caribbean</option>
+      <option>Black or Black British — African</option>
+      <option>Black or Black British — any other background</option>
+      <option>Other ethnic group — Arab</option>
+      <option>Other ethnic group — any other background</option>
+    </select>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 6 — DECLARATION
+  ══════════════════════════════════════════ -->
+  <h2>Section 6: Declaration</h2>
+
+  <div class="form-group">
+    <div class="checkbox-group" style="flex-direction:column;gap:10px;">
+      <label>
+        <input type="checkbox" name="decl_1">
+        I confirm that the information given in this application is true and complete.
+      </label>
+      <label>
+        <input type="checkbox" name="decl_2">
+        I understand that providing false information may result in the withdrawal of any offer of employment.
+      </label>
+      <label>
+        <input type="checkbox" name="decl_3">
+        I consent to Harlington Secondary School processing my personal data for recruitment purposes.
+      </label>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="form-group">
+      <label for="decl_name">Full name (as signature) <span class="req">*</span></label>
+      <input type="text" id="decl_name" name="decl_name">
+    </div>
+    <div class="form-group">
+      <label for="decl_date">Date <span class="req">*</span></label>
+      <input type="text" id="decl_date" name="decl_date" placeholder="DD/MM/YYYY">
+    </div>
+  </div>
+
+  <div class="submit-area">
+    <p class="submit-note">
+      Please review all answers before submitting. You will not be able to edit this form after submission.
+    </p>
+    <button class="btn-submit" onclick="handleSubmit()">Submit Application</button>
+  </div>
+
+  <div class="confirmation" id="confirmation">
+    &#10003; <strong>Test submission recorded.</strong>
+    No data was sent anywhere — this is a synthetic test form for AutoForm development.
+  </div>
+
+</div>
+
+<footer>
+  Harlington Secondary School &mdash; synthetic test form &mdash; AutoForm project
+</footer>
+
+<script>
+  function show(id) {
+    document.getElementById(id).classList.add('visible');
+  }
+  function hide(id) {
+    document.getElementById(id).classList.remove('visible');
+  }
+  function toggle(showId, hideId) {
+    show(showId);
+    hide(hideId);
+  }
+
+  function handleSubmit() {
+    document.getElementById('confirmation').style.display = 'block';
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>

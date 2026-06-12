@@ -151,7 +151,8 @@ next_slot = st.empty()
 with next_slot.container(border=True):
     st.markdown(
         "<div style='opacity:0.35'>"
-        "<strong>What to do next</strong> — available once the agent finishes<br><br>"
+        "<span style='font-size:1.25rem;font-weight:600'>What to do next</span>"
+        " — available once the agent finishes<br><br>"
         "1. Scroll through the form and check every field.<br>"
         "2. Complete any fields left blank.<br>"
         "3. When satisfied, click <strong>Submit Application</strong>."
@@ -250,9 +251,7 @@ if st.session_state.get("agent_run"):
         # so it replaces the dimmed placeholder in its original position
         with next_slot.container(border=True):
             st.markdown(
-                "<div style='background:#fff8e1;padding:4px 0 2px;border-radius:3px'>"
-                "<strong style='font-size:1.05rem'>&#10003; What to do next</strong>"
-                "</div>",
+                "<span style='font-size:1.25rem;font-weight:600'>&#10003; What to do next</span>",
                 unsafe_allow_html=True
             )
             st.write(
