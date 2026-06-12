@@ -236,6 +236,11 @@ For dropdowns: click the dropdown and select the closest matching option.
 For radio buttons: click the correct option.
 For checkboxes in a declaration: tick all of them.
 
+If you encounter a login screen before the form:
+- Email: use the applicant's email address from the profile
+- Password: use "demo123" for test/demo portals; if the page shows credentials, use those
+- After logging in, proceed to fill the application form as normal
+
 Do NOT re-fill fields you have already filled.
 Do NOT invent data — leave a field blank if you have nothing for it.
 Do NOT click Submit, Apply, or any button that sends the form.

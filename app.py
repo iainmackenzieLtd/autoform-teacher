@@ -15,7 +15,7 @@ from run_live import load_profile
 from agents.form_agent import run_form_agent
 
 PROFILE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "profile")
-MAX_STEPS   = 35
+MAX_STEPS   = 20
 
 
 def discover_profiles():
