@@ -148,7 +148,7 @@ Instructions:
     steps_taken = 0
     for step in range(max_steps):
         response = _client.beta.messages.create(
-            model="claude-opus-4-8",
+            model="claude-3-5-sonnet-20241022",
             max_tokens=4096,
             system=system,
             tools=tools,
