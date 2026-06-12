@@ -239,6 +239,22 @@ if st.session_state.get("agent_run"):
                 "submit it, then close the window when done."
             )
             _redraw_panels(running=False)
+            # Light up completion UI immediately — same mechanism as step_slot updates
+            with next_slot.container(border=True):
+                st.subheader("✓ What to do next")
+                st.write(
+                    "1. Switch to the form window and scroll through every field.\n"
+                    "2. Complete any fields that were left blank.\n"
+                    "3. When you are satisfied, click **Submit Application**."
+                )
+            done_reason_live = desc[5:].lstrip("—").strip()
+            with completion_slot.container():
+                st.divider()
+                st.success(f"✓  Agent completed the form in {n} steps.")
+                if done_reason_live:
+                    with st.container(border=True):
+                        st.markdown("**The AI says:**")
+                        st.write(done_reason_live)
         elif "screenshot" not in desc.lower():
             status_line.caption(f"↳ {desc}")
             _redraw_panels(running=True)
