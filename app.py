@@ -88,7 +88,7 @@ url = st.text_input("URL", label_visibility="collapsed",
 
 col_btn, col_chk = st.columns([2, 4])
 with col_btn:
-    agent_clicked = st.button("🤖 Launch Agent", type="primary",
+    agent_clicked = st.button("🤖 Launch Agent (Opens additional window)", type="primary",
                               use_container_width=True)
 with col_chk:
     needs_login = st.checkbox(
