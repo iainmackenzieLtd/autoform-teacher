@@ -17,6 +17,21 @@ from agents.form_agent import run_form_agent
 PROFILE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "profile")
 MAX_STEPS   = 20
 
+# ── Governance: phase-controlled URL access ───────────────────────────────────
+# TEST_MODE restricts the agent to approved synthetic test URLs only.
+# Set to False only when external-site mode is implemented with explicit
+# user confirmation, stronger warnings, and preserved submit blocking.
+TEST_MODE = True
+ALLOWED_DOMAINS = [
+    "localhost",
+    "127.0.0.1",
+    "file:///",
+    "iainmackenzieltd.github.io",
+]
+
+def _url_allowed(url: str) -> bool:
+    return any(domain in url for domain in ALLOWED_DOMAINS)
+
 
 def discover_profiles():
     """Return {display_name: file_path} for valid profile JSONs (must have 'personal' key)."""
@@ -52,6 +67,13 @@ st.markdown("""
 
 st.title("AutoForm")
 st.caption("Fill any job application form from your profile — automatically.")
+
+if TEST_MODE:
+    st.warning(
+        "🔒 **Test mode** — synthetic forms only · no real applications · "
+        "no automatic submission",
+        icon=None
+    )
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -113,6 +135,11 @@ st.info(
 if agent_clicked:
     if not url:
         st.error("Enter a URL first.")
+    elif TEST_MODE and not _url_allowed(url):
+        st.error(
+            f"⛔ Test mode: only approved synthetic test URLs are allowed. "
+            f"Approved domains: {', '.join(ALLOWED_DOMAINS)}"
+        )
     else:
         st.session_state.agent_run    = True
         st.session_state.agent_url    = url

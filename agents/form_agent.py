@@ -107,10 +107,21 @@ def _profile_summary(profile):
     return "\n".join(lines)
 
 
+_SUBMIT_PATTERNS = {
+    "submit", "send application", "apply now", "apply",
+    "finish application", "complete application", "submit application",
+}
+
+def _is_submit_action(label: str) -> bool:
+    low = label.lower().strip()
+    return any(p in low for p in _SUBMIT_PATTERNS)
+
+
 def _execute_actions(page, actions):
     """
     Execute a list of actions on the Playwright page.
     Returns (list of description strings, done: bool).
+    Submit-type clicks are blocked in code regardless of the system prompt.
     """
     descriptions = []
     for act in actions:
@@ -118,8 +129,15 @@ def _execute_actions(page, actions):
 
         if kind == "click":
             x, y = int(act["x"]), int(act["y"])
+            label = act.get("label", "")
+            if _is_submit_action(label):
+                descriptions.append(
+                    f"⛔ BLOCKED — refused to click '{label}' "
+                    "(submit-type action is not permitted)"
+                )
+                continue
             page.mouse.click(x, y)
-            descriptions.append(f"Click ({x},{y}) — {act.get('label','')}")
+            descriptions.append(f"Click ({x},{y}) — {label}")
             page.wait_for_timeout(400)
 
         elif kind == "type":
