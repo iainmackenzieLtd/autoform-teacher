@@ -1,11 +1,32 @@
 {
   "personal": {
+    "title": "Ms",
     "full_name": "Alex Morgan",
+    "date_of_birth": "15/03/1990",
     "email": "alex.morgan.test@example.com",
     "phone_uk": "07700 900 142",
     "phone_international": "+44 7700 900142",
+    "address_line_1": "14 Kirkstall Road",
+    "address_line_2": "",
+    "town_city": "Leeds",
+    "county": "West Yorkshire",
+    "postcode": "LS3 1JG",
     "location_current": "Leeds, West Yorkshire",
+    "nationality": "British",
+    "right_to_work": "Yes",
+    "visa_required": "No",
+    "ni_number": "AB 12 34 56 C",
+    "dbs_status": "Enhanced DBS — issued within 3 years",
+    "dbs_number": "001234567890",
+    "teacher_reference_number": "1234567",
+    "qts": "Yes",
     "availability": "Available from September 2026"
+  },
+  "employment_preferences": {
+    "employment_type": "Full time",
+    "contract_type": "Permanent",
+    "preferred_start": "September 2026",
+    "willing_to_relocate": "No"
   },
   "work_history": [
     {
@@ -82,5 +103,26 @@
       "date": "2022",
       "description": "Two-day certification in recognising and responding to mental health issues in learners"
     }
-  ]
+  ],
+  "referees": [
+    {
+      "name": "Dr Sarah Whitfield",
+      "title": "Head of Mathematics",
+      "organisation": "Leeds City College",
+      "address": "Cookridge Street, Leeds, LS2 8BL",
+      "email": "s.whitfield@leedscitycollege-test.ac.uk",
+      "phone": "0113 200 0100",
+      "relationship": "Line manager — current employer"
+    },
+    {
+      "name": "Mr James Okafor",
+      "title": "Deputy Headteacher",
+      "organisation": "Parkside Academy",
+      "address": "Parkside Road, Bradford, BD5 8AA",
+      "email": "j.okafor@parksideacademy-test.ac.uk",
+      "phone": "01274 000 200",
+      "relationship": "Line manager — previous employer"
+    }
+  ],
+  "supporting_statement": "I am an experienced and enthusiastic Mathematics teacher with over ten years in secondary and further education. My commitment to raising attainment, supporting learners of all abilities, and contributing to a positive school community drives everything I do. I am particularly skilled at making abstract mathematical concepts accessible and have a strong track record of improving outcomes at GCSE and A-level. I am looking for a new challenge where I can continue to develop professionally while making a meaningful contribution to students' progress."
 }

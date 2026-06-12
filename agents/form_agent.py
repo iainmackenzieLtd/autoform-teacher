@@ -35,17 +35,44 @@ def _profile_summary(profile):
     """Format profile data as plain text for Claude's prompt."""
     p = profile.get("personal", {})
     name = p.get("full_name", "")
+    addr_parts = [
+        p.get("address_line_1", ""),
+        p.get("address_line_2", ""),
+        p.get("town_city", ""),
+        p.get("county", ""),
+        p.get("postcode", ""),
+    ]
+    address_full = ", ".join(a for a in addr_parts if a)
     lines = [
+        f"Title:        {p.get('title', '')}",
         f"Full name:    {name}",
         f"First name:   {name.split()[0] if name else ''}",
         f"Last name:    {name.split()[-1] if name else ''}",
+        f"Date of birth:{p.get('date_of_birth', '')}",
         f"Email:        {p.get('email', '')}",
         f"Phone:        {p.get('phone_uk', '')}",
-        f"Location:     {p.get('location_current', '')}",
+        f"Address:      {address_full or p.get('location_current', '')}",
+        f"Postcode:     {p.get('postcode', '')}",
+        f"Nationality:  {p.get('nationality', '')}",
+        f"Right to work:{p.get('right_to_work', '')}",
+        f"Visa required:{p.get('visa_required', '')}",
+        f"NI number:    {p.get('ni_number', '')}",
+        f"DBS status:   {p.get('dbs_status', '')}",
+        f"DBS number:   {p.get('dbs_number', '')}",
+        f"Teacher ref:  {p.get('teacher_reference_number', '')}",
+        f"QTS:          {p.get('qts', '')}",
         f"Availability: {p.get('availability', '')}",
-        "",
-        "Work history:",
     ]
+    prefs = profile.get("employment_preferences", {})
+    if prefs:
+        lines += [
+            "",
+            "Employment preferences:",
+            f"  Type:         {prefs.get('employment_type', '')}",
+            f"  Contract:     {prefs.get('contract_type', '')}",
+            f"  Start:        {prefs.get('preferred_start', '')}",
+        ]
+    lines += ["", "Work history:"]
     for job in profile.get("work_history", []):
         end = job.get("end") or "Present"
         lines.append(f"  {job['start']}–{end}: {job['title']} at {job['employer']}")
@@ -65,6 +92,18 @@ def _profile_summary(profile):
             f"  {cpd.get('date','')}: {cpd.get('title','')} "
             f"({cpd.get('provider','')})"
         )
+    refs = profile.get("referees", [])
+    if refs:
+        lines += ["", "Referees:"]
+        for i, r in enumerate(refs, 1):
+            lines.append(
+                f"  Referee {i}: {r.get('name','')} — {r.get('title','')} "
+                f"at {r.get('organisation','')}"
+            )
+            lines.append(f"    Email: {r.get('email','')}  Phone: {r.get('phone','')}")
+    stmt = profile.get("supporting_statement", "")
+    if stmt:
+        lines += ["", f"Supporting statement: {stmt}"]
     return "\n".join(lines)
 
 
