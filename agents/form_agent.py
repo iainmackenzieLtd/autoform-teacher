@@ -22,8 +22,8 @@ load_dotenv()
 
 _client = anthropic.Anthropic()
 
-DISPLAY_WIDTH  = 860
-DISPLAY_HEIGHT = 800
+DISPLAY_WIDTH  = 1280
+DISPLAY_HEIGHT = 900
 
 
 def _screenshot(page):
@@ -186,21 +186,19 @@ def _execute_actions(page, actions):
     return descriptions, False
 
 
-def run_form_agent(page, profile, on_step=None, on_tokens=None, max_steps=35, pause_for_login=False):
+def run_form_agent(page, profile, on_step=None, on_screenshot=None, on_tokens=None, max_steps=35):
     """
     Fill the form visible in `page` using Claude vision.
 
-    page            — open Playwright page at the form URL
-    profile         — dict of applicant data
-    on_step         — optional callback(step_num, description) for UI updates
-    max_steps       — safety cap on screenshot→action loops
-    pause_for_login — if True, opens Playwright Inspector; user logs in then clicks Resume
+    page          — open Playwright page at the form URL
+    profile       — dict of applicant data
+    on_step       — optional callback(step_num, description) for UI updates
+    on_screenshot — optional callback(base64_png_str) called after each screenshot
+    on_tokens     — optional callback(tok_in, tok_out) for live cost display
+    max_steps     — safety cap on screenshot→action loops
 
-    Returns: (steps_taken, completed) where completed=True means agent signalled done.
+    Returns: (steps_taken, completed, done_reason, tok_in, tok_out, fields_filled, fields_skipped)
     """
-    if pause_for_login:
-        page.pause()
-
     profile_text = _profile_summary(profile)
 
     system = f"""You are filling a job application form on behalf of an applicant.
@@ -303,6 +301,8 @@ The select_option action sets the value directly and reliably without opening a 
             on_step(step + 1, "Taking screenshot and thinking…")
 
         screenshot_data = _screenshot(page)
+        if on_screenshot:
+            on_screenshot(screenshot_data)
 
         messages.append({
             "role": "user",

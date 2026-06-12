@@ -7,6 +7,7 @@ import sys
 import os
 import glob
 import json
+import base64
 import streamlit as st
 from playwright.sync_api import sync_playwright
 
@@ -108,28 +109,11 @@ st.subheader("Enter the form URL")
 url = st.text_input("URL", label_visibility="collapsed",
                     placeholder="https://...  or  file:///home/...")
 
-col_btn, col_chk = st.columns([2, 4])
-with col_btn:
-    agent_clicked = st.button("🤖 Launch Agent (Opens additional window)", type="primary",
-                              use_container_width=True)
-with col_chk:
-    needs_login = st.checkbox(
-        "Requires manual login",
-        help=(
-            "Tick for login-required portals. The browser will open and pause — "
-            "log in yourself, navigate to the form, then click Resume in the "
-            "Playwright Inspector window to hand control to the agent."
-        )
-    )
+agent_clicked = st.button("🤖 Launch Agent", type="primary")
 
 st.caption(
     "⚠️ Agent mode sends browser screenshots to the Claude API. "
     "Use the mock profile when testing on unfamiliar sites."
-)
-st.info(
-    "💡 When you click **Launch Agent**, a browser window will open alongside this one. "
-    "You can watch the form being filled in real time — do not close it until the agent finishes.",
-    icon=None
 )
 
 if agent_clicked:
@@ -141,17 +125,16 @@ if agent_clicked:
             f"Approved domains: {', '.join(ALLOWED_DOMAINS)}"
         )
     else:
-        st.session_state.agent_run    = True
-        st.session_state.agent_url    = url
-        st.session_state.agent_login  = needs_login
-        st.session_state.pop("agent_result", None)  # Clear any previous result
+        st.session_state.agent_run = True
+        st.session_state.agent_url = url
+        st.session_state.pop("agent_result", None)
         st.rerun()
 
 # ── Always-visible status area ────────────────────────────────────────────────
 st.divider()
 
-progress_bar = st.progress(0, text="Ready — waiting to launch")
-status_line  = st.empty()
+progress_bar    = st.progress(0, text="Ready — waiting to launch")
+status_line     = st.empty()
 
 col_step, col_info = st.columns([1, 2])
 with col_step:
@@ -159,6 +142,7 @@ with col_step:
 with col_info:
     info_slot = st.empty()
 
+screenshot_slot = st.empty()   # live form view — updates each step
 next_slot       = st.empty()
 completion_slot = st.empty()
 
@@ -180,11 +164,19 @@ if result:
         st.caption("**Tokens sent**  |  **Est. cost**")
         st.caption(f"{result['tok_in']:,}  |  ~${cost:.3f}")
 
+    if result.get("final_screenshot"):
+        with screenshot_slot.container():
+            st.image(
+                base64.b64decode(result["final_screenshot"]),
+                caption="Final form state — scroll to review all fields",
+                use_container_width=True,
+            )
+
     with next_slot.container(border=True):
         st.subheader("✓ What to do next")
         st.write(
-            "1. Switch to the form window and scroll through every field.\n"
-            "2. Complete any fields that were left blank.\n"
+            "1. Review the screenshot above and check every field.\n"
+            f"2. Open the form in your browser to complete any fields left blank: {result.get('url','')}\n"
             "3. When you are satisfied, click **Submit Application**."
         )
 
@@ -236,8 +228,8 @@ else:
             "<div style='opacity:0.35'>"
             "<span style='font-size:1.25rem;font-weight:600'>What to do next</span>"
             " — available once the agent finishes<br><br>"
-            "1. Switch to the form window and scroll through every field.<br>"
-            "2. Complete any fields that were left blank.<br>"
+            "1. Review the screenshot of the completed form.<br>"
+            "2. Open the form URL in your browser to check any fields left blank.<br>"
             "3. When satisfied, click <strong>Submit Application</strong>."
             "</div>",
             unsafe_allow_html=True
@@ -246,11 +238,10 @@ else:
 # ── Agent execution ───────────────────────────────────────────────────────────
 if st.session_state.get("agent_run"):
     st.session_state.agent_run = False
-    target_url  = st.session_state.get("agent_url", "")
-    pause_login = st.session_state.get("agent_login", False)
-    steps_log   = []
+    target_url = st.session_state.get("agent_url", "")
+    steps_log  = []
 
-    state = {"step": 0, "tok_in": 0, "tok_out": 0}
+    state = {"step": 0, "tok_in": 0, "tok_out": 0, "last_screenshot": None}
 
     def _redraw_panels(running=True):
         cost = (state["tok_in"] * 5 + state["tok_out"] * 25) / 1_000_000
@@ -276,17 +267,13 @@ if st.session_state.get("agent_run"):
             text="Complete" if is_done else f"Step {n} of up to {MAX_STEPS}"
         )
         if is_done:
-            status_line.caption(
-                "✓ Agent finished — review the form in the browser window, "
-                "submit it, then close the window when done."
-            )
+            status_line.caption("✓ Agent finished — review the screenshot, then open the form to submit.")
             _redraw_panels(running=False)
-            # Light up completion UI immediately — same mechanism as step_slot updates
             with next_slot.container(border=True):
                 st.subheader("✓ What to do next")
                 st.write(
-                    "1. Switch to the form window and scroll through every field.\n"
-                    "2. Complete any fields that were left blank.\n"
+                    "1. Review the screenshot above and check every field.\n"
+                    f"2. Open the form in your browser to complete any fields left blank: {target_url}\n"
                     "3. When you are satisfied, click **Submit Application**."
                 )
             done_reason_live = desc[5:].lstrip("—").strip()
@@ -300,6 +287,14 @@ if st.session_state.get("agent_run"):
         elif "screenshot" not in desc.lower():
             status_line.caption(f"↳ {desc}")
             _redraw_panels(running=True)
+
+    def _on_screenshot(b64_data):
+        state["last_screenshot"] = b64_data
+        screenshot_slot.image(
+            base64.b64decode(b64_data),
+            caption=f"Step {state['step']} — live form view",
+            use_container_width=True,
+        )
 
     def _on_tokens(tok_in, tok_out):
         state["tok_in"]  = tok_in
@@ -321,36 +316,30 @@ if st.session_state.get("agent_run"):
 
     try:
         with sync_playwright() as pw:
-            browser = pw.chromium.launch(
-                headless=False,
-                args=["--window-size=860,860", "--window-position=580,30"]
-            )
-            ctx  = browser.new_context(viewport={"width": 860, "height": 800})
+            browser = pw.chromium.launch(headless=True)
+            ctx  = browser.new_context(viewport={"width": 1280, "height": 900})
             page = ctx.new_page()
             page.goto(target_url, wait_until="networkidle")
             n_steps, completed, done_reason, tok_in, tok_out, fields_filled, fields_skipped = run_form_agent(
                 page, profile,
                 on_step=_on_step,
+                on_screenshot=_on_screenshot,
                 on_tokens=_on_tokens,
                 max_steps=MAX_STEPS,
-                pause_for_login=pause_login
             )
-            if not page.is_closed():
-                try:
-                    page.wait_for_event("close", timeout=0)
-                except Exception:
-                    pass
             browser.close()
 
         st.session_state.agent_result = {
-            "n_steps":        n_steps,
-            "completed":      completed,
-            "done_reason":    done_reason,
-            "tok_in":         tok_in,
-            "tok_out":        tok_out,
-            "steps_log":      steps_log,
-            "fields_filled":  fields_filled,
-            "fields_skipped": fields_skipped,
+            "n_steps":          n_steps,
+            "completed":        completed,
+            "done_reason":      done_reason,
+            "tok_in":           tok_in,
+            "tok_out":          tok_out,
+            "steps_log":        steps_log,
+            "fields_filled":    fields_filled,
+            "fields_skipped":   fields_skipped,
+            "final_screenshot": state["last_screenshot"],
+            "url":              target_url,
         }
         _agent_done = True
 
