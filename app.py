@@ -308,8 +308,13 @@ if "mapped" in st.session_state:
                         st.error(f"Error: {e}")
 
         with col_agent:
+            needs_login = st.checkbox(
+                "This form requires manual login",
+                help="Tick if the form is behind a login page. The browser will open and pause — log in yourself, then click Resume in the Playwright Inspector window to hand over to the agent."
+            )
             if st.button("🤖 Fill with AI Agent", use_container_width=True):
                 st.session_state.agent_run = True
+                st.session_state.agent_needs_login = needs_login
                 st.rerun()
 
         if st.session_state.get("agent_run"):
@@ -338,7 +343,11 @@ if "mapped" in st.session_state:
                         )
                         page = ctx.new_page()
                         page.goto(st.session_state.url, wait_until="networkidle")
-                        n_steps = run_form_agent(page, profile, on_step=_on_step)
+                        n_steps = run_form_agent(
+                            page, profile,
+                            on_step=_on_step,
+                            pause_for_login=st.session_state.get("agent_needs_login", False)
+                        )
                         if not page.is_closed():
                             try:
                                 page.wait_for_event("close", timeout=0)

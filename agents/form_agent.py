@@ -105,17 +105,21 @@ def _profile_summary(profile):
     return "\n".join(lines)
 
 
-def run_form_agent(page, profile, on_step=None, max_steps=40):
+def run_form_agent(page, profile, on_step=None, max_steps=40, pause_for_login=False):
     """
     Fill the form visible in `page` using Claude computer use.
 
-    page      — open Playwright page, already at the form URL
-    profile   — dict of applicant data (personal, work_history, education, cpd)
-    on_step   — optional callback(step_num: int, description: str) for UI updates
-    max_steps — safety cap on API loop iterations
+    page            — open Playwright page, already at the form URL
+    profile         — dict of applicant data (personal, work_history, education, cpd)
+    on_step         — optional callback(step_num: int, description: str) for UI updates
+    max_steps       — safety cap on API loop iterations
+    pause_for_login — if True, opens Playwright Inspector and waits for user to log in
+                      manually before the agent starts; user clicks Resume to continue
 
     Returns: number of steps taken.
     """
+    if pause_for_login:
+        page.pause()  # Opens Playwright Inspector — user logs in, then clicks Resume
     system = f"""You are a careful assistant filling a job application form on behalf of an applicant.
 
 Applicant details:
