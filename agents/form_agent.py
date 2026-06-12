@@ -127,6 +127,30 @@ def _execute_actions(page, actions):
             page.keyboard.type(str(text), delay=25)
             descriptions.append(f"Type: {str(text)[:60]}")
 
+        elif kind == "select_option":
+            x, y = int(act["x"]), int(act["y"])
+            value = act.get("value", "")
+            # Set select element directly via JS — avoids native OS dropdown visibility issues
+            matched = page.evaluate(f"""() => {{
+                const el = document.elementFromPoint({x}, {y});
+                if (!el) return false;
+                const sel = el.closest('select') || (el.tagName === 'SELECT' ? el : null);
+                if (!sel) return false;
+                const options = Array.from(sel.options);
+                const target = {repr(value.lower())};
+                const match = options.find(o => o.text.toLowerCase().includes(target)
+                                               || o.value.toLowerCase().includes(target));
+                if (!match) return false;
+                sel.value = match.value;
+                sel.dispatchEvent(new Event('change', {{bubbles: true}}));
+                return true;
+            }}""")
+            if matched:
+                descriptions.append(f"Select option '{value}' at ({x},{y})")
+            else:
+                descriptions.append(f"Select option '{value}' — no match found at ({x},{y})")
+            page.wait_for_timeout(300)
+
         elif kind == "scroll_down":
             page.mouse.wheel(0, 400)
             descriptions.append("Scroll down")
@@ -215,9 +239,13 @@ Return ONLY a JSON array — no explanation, no markdown, just the array.
 Available actions:
   {{"action": "click", "x": <int>, "y": <int>, "label": "<what you are clicking>"}}
   {{"action": "type", "text": "<text to type>"}}
+  {{"action": "select_option", "x": <int>, "y": <int>, "value": "<option text to select>"}}
   {{"action": "scroll_down"}}
   {{"action": "key", "key": "<Tab|Enter|Escape>"}}
-  {{"action": "done", "reason": "<message for the user>"}}"""
+  {{"action": "done", "reason": "<message for the user>"}}
+
+IMPORTANT: For any <select> dropdown, ALWAYS use select_option — never click to open a dropdown.
+The select_option action sets the value directly and reliably without opening a visual menu."""
 
     messages = []  # Full conversation history so Claude remembers previous steps
     steps_taken = 0
@@ -265,15 +293,16 @@ Available actions:
 
         raw = response.content[0].text.strip()
 
-        # Extract JSON array from response
-        match = re.search(r'\[.*\]', raw, re.DOTALL)
-        if not match:
+        # Extract first valid JSON array from response
+        # raw_decode stops at end of first valid value, ignoring trailing content
+        start = raw.find('[')
+        if start == -1:
             if on_step:
                 on_step(step + 1, f"No JSON returned: {raw[:80]}")
             break
 
         try:
-            actions = json.loads(match.group())
+            actions, _ = json.JSONDecoder().raw_decode(raw, start)
         except json.JSONDecodeError as e:
             if on_step:
                 on_step(step + 1, f"JSON parse error: {e}")
