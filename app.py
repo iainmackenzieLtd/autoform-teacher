@@ -124,7 +124,19 @@ with col_info:
         st.caption("**Tokens sent**  |  **Est. cost**")
         st.caption("—  |  —")
 
-# Completion area — empty until agent finishes
+# "What to do next" box — always visible, dimmed while idle/running
+next_slot = st.empty()
+with next_slot.container(border=True):
+    st.markdown("<span style='color:#aaa'>**What to do next** — available once the agent finishes</span>",
+                unsafe_allow_html=True)
+    st.markdown(
+        "<span style='color:#bbb'>1. Scroll through the form and check every field.<br>"
+        "2. Complete any fields left blank.<br>"
+        "3. When satisfied, click <b>Submit Application</b>.</span>",
+        unsafe_allow_html=True
+    )
+
+# Completion message area — empty until agent finishes
 completion_slot = st.empty()
 
 # ── Agent execution ───────────────────────────────────────────────────────────
@@ -220,7 +232,7 @@ if st.session_state.get("agent_run"):
                     "The form may be partially complete."
                 )
 
-            with st.container(border=True):
+            with next_slot.container(border=True):
                 st.markdown("**What to do next**")
                 st.write(
                     "1. Scroll through the form in the browser window and check every field.\n"
