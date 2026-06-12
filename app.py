@@ -140,8 +140,10 @@ if st.session_state.get("agent_run"):
         cost = (state["tok_in"] * 5 + state["tok_out"] * 25) / 1_000_000
 
         with step_slot.container(border=True):
-            label = f"{'Running' if running else 'Done'}"
-            st.metric("Step", f"{state['step']} / {MAX_STEPS}", delta=label)
+            if not running:
+                st.metric("Step", "✓  Complete", delta=f"{state['step']} steps used")
+            else:
+                st.metric("Step", f"{state['step']} / {MAX_STEPS}", delta="Running")
 
         with info_slot.container(border=True):
             st.caption("**Model**")
@@ -154,16 +156,22 @@ if st.session_state.get("agent_run"):
     def _on_step(n, desc):
         state["step"] = n
         steps_log.append(f"Step {n}: {desc}")
-        progress_bar.progress(min(n / MAX_STEPS, 1.0),
-                              text=f"Step {n} of up to {MAX_STEPS}")
-        if "screenshot" not in desc.lower():
+        is_done = desc.lower().startswith("done")
+        progress_bar.progress(
+            1.0 if is_done else min(n / MAX_STEPS, 1.0),
+            text="Complete" if is_done else f"Step {n} of up to {MAX_STEPS}"
+        )
+        if is_done:
+            status_line.empty()
+            _redraw_panels(running=False)
+        elif "screenshot" not in desc.lower():
             status_line.caption(f"↳ {desc}")
-        _redraw_panels(running=True)
+            _redraw_panels(running=True)
 
     def _on_tokens(tok_in, tok_out):
         state["tok_in"]  = tok_in
         state["tok_out"] = tok_out
-        _redraw_panels(running=True)
+        _redraw_panels(running=state["step"] == 0 or not state.get("done", False))
 
     # Kick off with "running" state immediately
     progress_bar.progress(0, text="Starting…")
@@ -173,9 +181,9 @@ if st.session_state.get("agent_run"):
         with sync_playwright() as pw:
             browser = pw.chromium.launch(
                 headless=False,
-                args=["--window-size=1280,800"]
+                args=["--window-size=860,860", "--window-position=580,30"]
             )
-            ctx  = browser.new_context(viewport={"width": 1280, "height": 800})
+            ctx  = browser.new_context(viewport={"width": 860, "height": 800})
             page = ctx.new_page()
             page.goto(target_url, wait_until="networkidle")
             n_steps, completed, done_reason, tok_in, tok_out = run_form_agent(

@@ -22,7 +22,7 @@ load_dotenv()
 
 _client = anthropic.Anthropic()
 
-DISPLAY_WIDTH  = 1280
+DISPLAY_WIDTH  = 860
 DISPLAY_HEIGHT = 800
 
 
