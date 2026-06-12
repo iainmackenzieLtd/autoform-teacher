@@ -11,6 +11,7 @@ from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from run_live import fetch_fields, map_fields, load_profile
+from agents.field_explainer import explain_field
 
 PROFILE_PATH = "profile/user_profile.json"
 
@@ -88,6 +89,7 @@ if st.button("Read Form", type="primary"):
             mapped = map_fields(raw_fields, profile)
             st.session_state.mapped = mapped
             st.session_state.url = url
+            st.session_state.pop("explanations", None)
         except Exception as e:
             st.error(f"Could not read form: {e}")
 
@@ -111,8 +113,19 @@ if "mapped" in st.session_state:
 
     with col2:
         st.markdown(f"**⚠️ {len(gaps)} fields need your input**")
+
+        if gaps and "explanations" not in st.session_state:
+            with st.spinner("Getting AI explanations for each field..."):
+                st.session_state.explanations = {
+                    f["id"]: explain_field(f["label"] or f["id"] or "")
+                    for f in gaps
+                }
+
         for f in gaps:
             label = f["label"] or f["id"] or ""
+            explanation = st.session_state.get("explanations", {}).get(f["id"], "")
+            if explanation:
+                st.caption(f"💡 {explanation}")
             key = f"gap_{f['id']}"
             val = st.text_area(label, key=key, height=68)
             f["value"] = val if val.strip() else None
