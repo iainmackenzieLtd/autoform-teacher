@@ -6,6 +6,7 @@ Run with: streamlit run app.py
 import sys
 import os
 import json
+import webbrowser
 import streamlit as st
 from playwright.sync_api import sync_playwright
 
@@ -14,6 +15,21 @@ from run_live import fetch_fields, map_fields, load_profile
 from agents.field_explainer import explain_field
 
 PROFILE_PATH = "profile/user_profile.json"
+
+
+def classify_field(label):
+    """Return 'block', 'sensitive', or 'safe' based on the field label."""
+    l = (label or "").lower()
+    for kw in ["national insurance", "ni number", "passport", "bank account", "sort code",
+               "account number", "disability", "ethnic", "criminal", "dbs", "gender",
+               "religion", "medical", "health condition"]:
+        if kw in l:
+            return "block"
+    for kw in ["address", "postcode", "salary", "wage", "date of birth", "dob",
+               "nationality", "right to work", "reference", "referee", "next of kin"]:
+        if kw in l:
+            return "sensitive"
+    return "safe"
 
 
 def fill_live(page, mapped_fields):
@@ -78,31 +94,27 @@ url = st.text_input(
     label_visibility="collapsed"
 )
 
-if st.button("Read Form", type="primary"):
-    # Close any previously opened form browser
-    if "form_browser" in st.session_state:
-        try:
-            st.session_state.form_browser.close()
-            st.session_state.form_pw.stop()
-        except Exception:
-            pass
-        for k in ("form_pw", "form_browser", "form_page"):
-            st.session_state.pop(k, None)
+col_btn, col_link = st.columns([2, 3])
+with col_btn:
+    read_clicked = st.button("Read Form", type="primary")
+with col_link:
+    if "url" in st.session_state:
+        st.link_button("Open form in new tab ↗", st.session_state.url)
 
-    with st.spinner("Opening form..."):
+if read_clicked:
+    with st.spinner("Reading form..."):
         try:
-            pw = sync_playwright().start()
-            browser = pw.chromium.launch(headless=False)
-            page = browser.new_page()
-            page.goto(url, wait_until="networkidle")
-            raw_fields = fetch_fields(page)
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch(headless=True)
+                page = browser.new_page()
+                page.goto(url, wait_until="networkidle")
+                raw_fields = fetch_fields(page)
+                browser.close()
             mapped = map_fields(raw_fields, profile)
-            st.session_state.form_pw = pw
-            st.session_state.form_browser = browser
-            st.session_state.form_page = page
             st.session_state.mapped = mapped
             st.session_state.url = url
             st.session_state.pop("explanations", None)
+            webbrowser.open_new_tab(url)
         except Exception as e:
             st.error(f"Could not read form: {e}")
 
@@ -144,27 +156,81 @@ if "mapped" in st.session_state:
             val = st.text_area(label, key=key, height=68)
             f["value"] = val if val.strip() else None
 
-    # ── Step 3: Fill ──────────────────────────────────────────
+    # ── Step 3: Approve fields ────────────────────────────────
     st.divider()
-    st.subheader("Step 3 — Fill the form")
-    st.info("The form is open in the browser window — review it, then click Fill Form. Close the browser window when you are done.")
+    st.subheader("Step 3 — Approve fields before filling")
+    st.caption(
+        "Tick the fields you want AutoForm to type into the browser. "
+        "🟢 Safe fields are pre-ticked. "
+        "🟡 Sensitive fields are pre-ticked but flagged for your attention. "
+        "🔴 High-risk fields are unticked by default — tick only if you're sure."
+    )
 
-    if st.button("Fill Form", type="primary"):
-        page = st.session_state.get("form_page")
-        if page is None or page.is_closed():
-            st.error("The form browser was closed. Click 'Read Form' to reopen it.")
-        else:
-            with st.spinner("Filling form... close the browser window when done."):
+    LEVEL_ICON    = {"safe": "🟢", "sensitive": "🟡", "block": "🔴"}
+    LEVEL_DEFAULT = {"safe": True,  "sensitive": True,  "block": False}
+
+    fillable   = [f for f in mapped if f.get("value")]
+    no_value   = [f for f in mapped if not f.get("value")]
+
+    if not fillable:
+        st.warning("No fields have values yet — complete the gap inputs in Step 2 first.")
+    else:
+        st.caption(
+            f"{len(fillable)} fields have values · "
+            f"{len(no_value)} fields have no value and will be skipped automatically"
+        )
+        st.markdown("")
+
+        hcol1, hcol2, hcol3 = st.columns([1, 5, 6])
+        hcol1.caption("Fill?")
+        hcol2.caption("Field")
+        hcol3.caption("Value that will be typed")
+        st.markdown("---")
+
+        for f in fillable:
+            label = f["label"] or f["id"] or ""
+            level = classify_field(label)
+            icon  = LEVEL_ICON[level]
+            default = LEVEL_DEFAULT[level]
+
+            c1, c2, c3 = st.columns([1, 5, 6])
+            with c1:
+                st.checkbox("", key=f"approve_{f['id']}", value=default,
+                            label_visibility="collapsed")
+            with c2:
+                st.markdown(f"{icon} **{label}**")
+            with c3:
+                st.caption(str(f["value"])[:120])
+
+        st.markdown("---")
+
+        approved_count = sum(
+            1 for f in fillable
+            if st.session_state.get(f"approve_{f['id']}", False)
+        )
+        st.caption(f"{approved_count} of {len(fillable)} fields approved for filling")
+
+        if st.button("Confirm and Fill", type="primary"):
+            approved_fields = [
+                f for f in fillable
+                if st.session_state.get(f"approve_{f['id']}", False)
+            ]
+            with st.spinner(f"Filling {len(approved_fields)} approved fields… close the browser when done."):
                 try:
-                    filled, skipped = fill_live(page, mapped)
-                    st.success(f"Done — {filled} fields filled, {skipped} skipped.")
+                    with sync_playwright() as pw:
+                        browser = pw.chromium.launch(
+                            headless=False,
+                            args=["--window-size=1400,900"]
+                        )
+                        page = browser.new_page()
+                        page.goto(st.session_state.url, wait_until="networkidle")
+                        filled, not_found = fill_live(page, approved_fields)
+                        browser.close()
+                    blocked = len(fillable) - len(approved_fields)
+                    st.success(
+                        f"Done — {filled} fields filled · "
+                        f"{blocked} skipped by you · "
+                        f"{not_found} not found on page"
+                    )
                 except Exception as e:
                     st.error(f"Error: {e}")
-                finally:
-                    try:
-                        st.session_state.form_browser.close()
-                        st.session_state.form_pw.stop()
-                    except Exception:
-                        pass
-                    for k in ("form_pw", "form_browser", "form_page"):
-                        st.session_state.pop(k, None)
