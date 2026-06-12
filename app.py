@@ -89,38 +89,44 @@ if st.session_state.get("agent_run"):
     st.session_state.agent_run = False
     target_url  = st.session_state.get("agent_url", "")
     pause_login = st.session_state.get("agent_login", False)
-    steps_log   = []
+    steps_log = []
+
+    st.info("Agent is working — watch the browser window.")
+    status_line = st.empty()
+    status_line.caption("Starting…")
 
     def _on_step(n, desc):
         steps_log.append(f"Step {n}: {desc}")
+        status_line.caption(f"Step {n} — {desc}")
 
-    with st.spinner("Agent is working — watch the browser window…"):
-        try:
-            with sync_playwright() as pw:
-                browser = pw.chromium.launch(
-                    headless=False,
-                    args=["--window-size=1280,800"]
-                )
-                ctx  = browser.new_context(viewport={"width": 1280, "height": 800})
-                page = ctx.new_page()
-                page.goto(target_url, wait_until="networkidle")
-                n_steps = run_form_agent(
-                    page, profile,
-                    on_step=_on_step,
-                    pause_for_login=pause_login
-                )
-                if not page.is_closed():
-                    try:
-                        page.wait_for_event("close", timeout=0)
-                    except Exception:
-                        pass
-                browser.close()
-            st.success(
-                f"Agent finished in {n_steps} steps. "
-                "Review what was filled before closing the browser."
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(
+                headless=False,
+                args=["--window-size=1280,800"]
             )
-            with st.expander("Agent activity log"):
-                for s in steps_log:
-                    st.text(s)
-        except Exception as e:
-            st.error(f"Agent error: {e}")
+            ctx  = browser.new_context(viewport={"width": 1280, "height": 800})
+            page = ctx.new_page()
+            page.goto(target_url, wait_until="networkidle")
+            n_steps = run_form_agent(
+                page, profile,
+                on_step=_on_step,
+                pause_for_login=pause_login
+            )
+            if not page.is_closed():
+                try:
+                    page.wait_for_event("close", timeout=0)
+                except Exception:
+                    pass
+            browser.close()
+        status_line.empty()
+        st.success(
+            f"Agent finished in {n_steps} steps. "
+            "Review what was filled before closing the browser."
+        )
+        with st.expander("Agent activity log"):
+            for s in steps_log:
+                st.text(s)
+    except Exception as e:
+        status_line.empty()
+        st.error(f"Agent error: {e}")
