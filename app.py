@@ -40,20 +40,11 @@ st.set_page_config(page_title="AutoForm", layout="wide")
 
 st.markdown("""
 <style>
-/* Captions — used in model/token info box and warnings */
 [data-testid="stCaptionContainer"] p { font-size: 1rem !important; line-height: 1.5; }
-
-/* Metric value (big number) */
 [data-testid="stMetricValue"]  { font-size: 2rem !important; }
-
-/* Metric label (small label above value) */
 [data-testid="stMetricLabel"]  { font-size: 1rem !important; }
-
-/* Metric delta (Running / Done text below value) */
 [data-testid="stMetricDelta"] svg { display: none; }
 [data-testid="stMetricDelta"]  { font-size: 0.95rem !important; }
-
-/* Sidebar text */
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] li { font-size: 0.95rem !important; }
 </style>
@@ -118,50 +109,92 @@ if agent_clicked:
     if not url:
         st.error("Enter a URL first.")
     else:
-        st.session_state.agent_run   = True
-        st.session_state.agent_url   = url
-        st.session_state.agent_login = needs_login
+        st.session_state.agent_run    = True
+        st.session_state.agent_url    = url
+        st.session_state.agent_login  = needs_login
+        st.session_state.pop("agent_result", None)  # Clear any previous result
         st.rerun()
 
 # ── Always-visible status area ────────────────────────────────────────────────
 st.divider()
 
-# Progress bar — always rendered, idle at 0%
 progress_bar = st.progress(0, text="Ready — waiting to launch")
 status_line  = st.empty()
 
-# Two-column layout: step counter (large) | model + token info (small)
 col_step, col_info = st.columns([1, 2])
-
 with col_step:
     step_slot = st.empty()
+with col_info:
+    info_slot = st.empty()
+
+next_slot       = st.empty()
+completion_slot = st.empty()
+
+# ── Render panels based on current state ─────────────────────────────────────
+result = st.session_state.get("agent_result")
+
+if result:
+    # ── Completed state ───────────────────────────────────────────────────────
+    cost = (result["tok_in"] * 5 + result["tok_out"] * 25) / 1_000_000
+
+    progress_bar.progress(1.0, text="Complete")
+
+    with step_slot.container(border=True):
+        st.metric("Step", "✓  Complete", delta=f"{result['n_steps']} steps used")
+
+    with info_slot.container(border=True):
+        st.caption("**Model**")
+        st.caption("claude-opus-4-8")
+        st.caption("**Tokens sent**  |  **Est. cost**")
+        st.caption(f"{result['tok_in']:,}  |  ~${cost:.3f}")
+
+    with next_slot.container(border=True):
+        st.subheader("✓ What to do next")
+        st.write(
+            "1. Switch to the form window and scroll through every field.\n"
+            "2. Complete any fields that were left blank.\n"
+            "3. When you are satisfied, click **Submit Application**."
+        )
+
+    with completion_slot.container():
+        st.divider()
+        if result["completed"]:
+            st.success(f"✓  Agent completed the form in {result['n_steps']} steps.")
+            if result["done_reason"]:
+                with st.container(border=True):
+                    st.markdown("**The AI says:**")
+                    st.write(result["done_reason"])
+        else:
+            st.warning(
+                f"Agent reached the step limit ({result['n_steps']} steps) without "
+                "signalling done. The form may be partially complete."
+            )
+        with st.expander("Agent activity log"):
+            for s in result["steps_log"]:
+                st.text(s)
+
+else:
+    # ── Idle state ────────────────────────────────────────────────────────────
     with step_slot.container(border=True):
         st.metric("Step", f"— / {MAX_STEPS}")
 
-with col_info:
-    info_slot = st.empty()
     with info_slot.container(border=True):
         st.caption("**Model**")
         st.caption("claude-opus-4-8")
         st.caption("**Tokens sent**  |  **Est. cost**")
         st.caption("—  |  —")
 
-# "What to do next" box — always visible, dimmed while idle/running
-next_slot = st.empty()
-with next_slot.container(border=True):
-    st.markdown(
-        "<div style='opacity:0.35'>"
-        "<span style='font-size:1.25rem;font-weight:600'>What to do next</span>"
-        " — available once the agent finishes<br><br>"
-        "1. Scroll through the form and check every field.<br>"
-        "2. Complete any fields left blank.<br>"
-        "3. When satisfied, click <strong>Submit Application</strong>."
-        "</div>",
-        unsafe_allow_html=True
-    )
-
-# Completion message area — empty until agent finishes
-completion_slot = st.empty()
+    with next_slot.container(border=True):
+        st.markdown(
+            "<div style='opacity:0.35'>"
+            "<span style='font-size:1.25rem;font-weight:600'>What to do next</span>"
+            " — available once the agent finishes<br><br>"
+            "1. Switch to the form window and scroll through every field.<br>"
+            "2. Complete any fields that were left blank.<br>"
+            "3. When satisfied, click <strong>Submit Application</strong>."
+            "</div>",
+            unsafe_allow_html=True
+        )
 
 # ── Agent execution ───────────────────────────────────────────────────────────
 if st.session_state.get("agent_run"):
@@ -174,13 +207,11 @@ if st.session_state.get("agent_run"):
 
     def _redraw_panels(running=True):
         cost = (state["tok_in"] * 5 + state["tok_out"] * 25) / 1_000_000
-
         with step_slot.container(border=True):
             if not running:
                 st.metric("Step", "✓  Complete", delta=f"{state['step']} steps used")
             else:
                 st.metric("Step", f"{state['step']} / {MAX_STEPS}", delta="Running")
-
         with info_slot.container(border=True):
             st.caption("**Model**")
             st.caption("claude-opus-4-8")
@@ -207,9 +238,9 @@ if st.session_state.get("agent_run"):
     def _on_tokens(tok_in, tok_out):
         state["tok_in"]  = tok_in
         state["tok_out"] = tok_out
-        _redraw_panels(running=state["step"] == 0 or not state.get("done", False))
+        _redraw_panels(running=True)
 
-    # Kick off — show Starting state before first step fires
+    # Show starting state before first step fires
     progress_bar.progress(0, text="Starting…")
     with step_slot.container(border=True):
         st.metric("Step", "Starting…")
@@ -242,42 +273,16 @@ if st.session_state.get("agent_run"):
                     pass
             browser.close()
 
-        progress_bar.progress(1.0, text="Complete")
-        status_line.empty()
-        _redraw_panels(running=False)
-
-        # ── Completion panels ─────────────────────────────────────────────────
-        # Light up the "What to do next" box — updated outside completion_slot
-        # so it replaces the dimmed placeholder in its original position
-        with next_slot.container(border=True):
-            st.markdown(
-                "<span style='font-size:1.25rem;font-weight:600'>&#10003; What to do next</span>",
-                unsafe_allow_html=True
-            )
-            st.write(
-                "1. Switch to the form window and scroll through every field.\n"
-                "2. Complete any fields that were left blank.\n"
-                "3. When you are satisfied, click **Submit Application**."
-            )
-
-        with completion_slot.container():
-            st.divider()
-
-            if completed:
-                st.success(f"✓  Agent completed the form in {n_steps} steps.")
-                if done_reason:
-                    with st.container(border=True):
-                        st.markdown("**The AI says:**")
-                        st.write(done_reason)
-            else:
-                st.warning(
-                    f"Agent reached the step limit ({n_steps} steps) without signalling done. "
-                    "The form may be partially complete."
-                )
-
-            with st.expander("Agent activity log"):
-                for s in steps_log:
-                    st.text(s)
+        # Store result and rerun — the completion UI renders cleanly on the next pass
+        st.session_state.agent_result = {
+            "n_steps":     n_steps,
+            "completed":   completed,
+            "done_reason": done_reason,
+            "tok_in":      tok_in,
+            "tok_out":     tok_out,
+            "steps_log":   steps_log,
+        }
+        st.rerun()
 
     except Exception as e:
         status_line.empty()
