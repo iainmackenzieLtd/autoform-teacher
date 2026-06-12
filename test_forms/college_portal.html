@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Northgate College — Job Application</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 14px; background: #f4f4f4; color: #333; }
+
+    /* ── Header ── */
+    .header { background: #1a3a5c; color: white; padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
+    .header h1 { font-size: 20px; font-weight: bold; }
+    .header span { font-size: 13px; opacity: 0.8; }
+
+    /* ── Job info bar ── */
+    .job-bar { background: #2c5f8a; color: white; padding: 10px 20px; font-size: 13px; }
+    .job-bar table { border-collapse: collapse; width: 100%; }
+    .job-bar td { padding: 3px 20px 3px 0; }
+    .job-bar td:first-child { font-weight: bold; opacity: 0.8; width: 120px; }
+
+    /* ── Main layout ── */
+    .container { display: flex; gap: 0; max-width: 1200px; margin: 20px auto; }
+
+    /* ── Section nav ── */
+    .nav { width: 220px; flex-shrink: 0; }
+    .nav-title { background: #1a3a5c; color: white; padding: 10px 14px; font-size: 13px; font-weight: bold; }
+    .nav button {
+      display: block; width: 100%; text-align: left; padding: 10px 14px;
+      background: #e8eef4; border: none; border-bottom: 1px solid #ccc;
+      cursor: pointer; font-size: 13px; color: #1a3a5c; font-weight: bold;
+      transition: background 0.15s;
+    }
+    .nav button:hover { background: #d0dce8; }
+    .nav button.active { background: #1a3a5c; color: white; }
+    .nav button.done { background: #d4edda; color: #155724; }
+    .nav button.done::after { content: " ✓"; }
+
+    /* ── Form panels ── */
+    .panels { flex: 1; background: white; border: 1px solid #ccc; }
+    .panel { display: none; padding: 24px; }
+    .panel.active { display: block; }
+    .panel h2 { font-size: 16px; color: #1a3a5c; border-bottom: 2px solid #1a3a5c; padding-bottom: 8px; margin-bottom: 20px; }
+
+    /* ── Form elements ── */
+    .form-row { margin-bottom: 14px; }
+    .form-row label { display: block; font-weight: bold; margin-bottom: 4px; color: #444; }
+    .form-row label .req { color: #c00; }
+    .form-row input[type=text],
+    .form-row input[type=email],
+    .form-row input[type=tel],
+    .form-row input[type=date],
+    .form-row select,
+    .form-row textarea {
+      width: 100%; padding: 7px 9px; border: 1px solid #aaa; border-radius: 3px;
+      font-size: 14px; font-family: Arial, sans-serif;
+    }
+    .form-row textarea { resize: vertical; }
+    .form-row select { background: white; }
+    .hint { font-size: 12px; color: #666; margin-top: 3px; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* ── Employment / Education block ── */
+    .entry-block { border: 1px solid #ccc; border-radius: 4px; padding: 16px; margin-bottom: 16px; background: #fafafa; }
+    .entry-block h3 { font-size: 14px; color: #1a3a5c; margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+
+    /* ── Radio group ── */
+    .radio-group { display: flex; gap: 20px; margin-top: 4px; }
+    .radio-group label { font-weight: normal; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 10px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; }
+    .btn-save {
+      background: #1a3a5c; color: white; border: none; padding: 10px 24px;
+      border-radius: 3px; cursor: pointer; font-size: 14px; font-weight: bold;
+    }
+    .btn-save:hover { background: #2c5f8a; }
+    .btn-clear {
+      background: white; color: #666; border: 1px solid #aaa; padding: 10px 20px;
+      border-radius: 3px; cursor: pointer; font-size: 14px;
+    }
+
+    /* ── Save confirmation ── */
+    .saved-msg { display: none; background: #d4edda; border: 1px solid #c3e6cb; color: #155724;
+      padding: 10px 14px; border-radius: 3px; margin-top: 12px; font-size: 13px; }
+
+    /* ── Welcome panel ── */
+    .welcome { padding: 24px; }
+    .welcome h2 { font-size: 16px; color: #1a3a5c; margin-bottom: 12px; }
+    .welcome p { line-height: 1.6; margin-bottom: 10px; color: #555; }
+    .section-list { list-style: none; margin: 16px 0; }
+    .section-list li { padding: 6px 0; border-bottom: 1px solid #eee; color: #1a3a5c; font-weight: bold; }
+    .section-list li::before { content: "▸ "; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div>
+    <h1>Northgate College</h1>
+    <span>Online Application System</span>
+  </div>
+</div>
+
+<!-- Job info -->
+<div class="job-bar">
+  <table>
+    <tr>
+      <td>Post:</td><td><strong>Lecturer in Mathematics</strong></td>
+      <td>Ref:</td><td>NC-2026-041</td>
+      <td>Closing:</td><td>30 June 2026</td>
+      <td>Salary:</td><td>£28,000–£38,000 per annum</td>
+    </tr>
+  </table>
+</div>
+
+<!-- Main -->
+<div class="container">
+
+  <!-- Nav -->
+  <div class="nav">
+    <div class="nav-title">Your Application</div>
+    <button onclick="show('welcome')" class="active" id="nav-welcome">Welcome</button>
+    <button onclick="show('personal')" id="nav-personal">Personal Details</button>
+    <button onclick="show('employment')" id="nav-employment">Employment History</button>
+    <button onclick="show('education')" id="nav-education">Education</button>
+    <button onclick="show('training')" id="nav-training">Training &amp; CPD</button>
+    <button onclick="show('statement')" id="nav-statement">Supporting Statement</button>
+    <button onclick="show('references')" id="nav-references">References</button>
+    <button onclick="show('declaration')" id="nav-declaration">Declaration</button>
+  </div>
+
+  <!-- Panels -->
+  <div class="panels">
+
+    <!-- Welcome -->
+    <div class="panel active" id="panel-welcome">
+      <div class="welcome">
+        <h2>Continuing your application…</h2>
+        <p>Please complete each section of this application form using the navigation on the left. All sections marked with <span style="color:#c00">*</span> are required.</p>
+        <p>Your progress is saved within each section when you click <strong>Save Section</strong>.</p>
+        <ul class="section-list">
+          <li>Personal Details</li>
+          <li>Employment History</li>
+          <li>Education</li>
+          <li>Training &amp; CPD</li>
+          <li>Supporting Statement</li>
+          <li>References</li>
+          <li>Declaration</li>
+        </ul>
+        <p style="font-size:12px;color:#888;">Test form — Northgate College (fictional). No data is submitted anywhere.</p>
+      </div>
+    </div>
+
+    <!-- Personal Details -->
+    <div class="panel" id="panel-personal">
+      <h2>Personal Details</h2>
+
+      <div class="two-col">
+        <div class="form-row">
+          <label for="title">Title <span class="req">*</span></label>
+          <select id="title" name="title">
+            <option value="">— Select —</option>
+            <option>Mr</option><option>Mrs</option><option>Ms</option>
+            <option>Miss</option><option>Dr</option><option>Prof</option>
+          </select>
+        </div>
+        <div></div>
+      </div>
+
+      <div class="two-col">
+        <div class="form-row">
+          <label for="first_name">First Name <span class="req">*</span></label>
+          <input type="text" id="first_name" name="first_name" placeholder="First name">
+        </div>
+        <div class="form-row">
+          <label for="last_name">Last Name <span class="req">*</span></label>
+          <input type="text" id="last_name" name="last_name" placeholder="Last name">
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="form-row">
+          <label for="email">Email Address <span class="req">*</span></label>
+          <input type="email" id="email" name="email" placeholder="your@email.com">
+        </div>
+        <div class="form-row">
+          <label for="phone">Mobile Number <span class="req">*</span></label>
+          <input type="tel" id="phone" name="phone" placeholder="07700 000000">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="address1">Address Line 1 <span class="req">*</span></label>
+        <input type="text" id="address1" name="address1" placeholder="Street address">
+      </div>
+      <div class="form-row">
+        <label for="address2">Address Line 2</label>
+        <input type="text" id="address2" name="address2" placeholder="Apartment, suite, etc. (optional)">
+      </div>
+      <div class="two-col">
+        <div class="form-row">
+          <label for="town">Town / City <span class="req">*</span></label>
+          <input type="text" id="town" name="town" placeholder="Town or city">
+        </div>
+        <div class="form-row">
+          <label for="postcode">Postcode <span class="req">*</span></label>
+          <input type="text" id="postcode" name="postcode" placeholder="LS1 1AA">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Are you eligible to work in the UK? <span class="req">*</span></label>
+        <div class="radio-group">
+          <label><input type="radio" name="rtw" value="Yes"> Yes</label>
+          <label><input type="radio" name="rtw" value="No"> No</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-save" onclick="saveSection('personal')">Save Section</button>
+        <button class="btn-clear" onclick="show('employment')">Next Section →</button>
+      </div>
+      <div class="saved-msg" id="saved-personal">✓ Personal Details saved.</div>
+    </div>
+
+    <!-- Employment History -->
+    <div class="panel" id="panel-employment">
+      <h2>Employment History</h2>
+      <p style="color:#555;margin-bottom:16px;font-size:13px;">List your most recent employment first. Include all relevant posts.</p>
+
+      <div class="entry-block">
+        <h3>Position 1 (Most Recent)</h3>
+        <div class="form-row">
+          <label for="emp1_employer">Employer / School / College Name <span class="req">*</span></label>
+          <input type="text" id="emp1_employer" name="emp1_employer" placeholder="Organisation name">
+        </div>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="emp1_title">Job Title <span class="req">*</span></label>
+            <input type="text" id="emp1_title" name="emp1_title" placeholder="Your role">
+          </div>
+          <div></div>
+        </div>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="emp1_start">Start Date <span class="req">*</span></label>
+            <input type="text" id="emp1_start" name="emp1_start" placeholder="e.g. September 2019">
+          </div>
+          <div class="form-row">
+            <label for="emp1_end">End Date</label>
+            <input type="text" id="emp1_end" name="emp1_end" placeholder="e.g. Present">
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="emp1_duties">Main Duties and Responsibilities <span class="req">*</span></label>
+          <textarea id="emp1_duties" name="emp1_duties" rows="4" placeholder="Describe your key responsibilities and achievements…"></textarea>
+        </div>
+      </div>
+
+      <div class="entry-block">
+        <h3>Position 2</h3>
+        <div class="form-row">
+          <label for="emp2_employer">Employer / School / College Name</label>
+          <input type="text" id="emp2_employer" name="emp2_employer" placeholder="Organisation name">
+        </div>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="emp2_title">Job Title</label>
+            <input type="text" id="emp2_title" name="emp2_title" placeholder="Your role">
+          </div>
+          <div></div>
+        </div>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="emp2_start">Start Date</label>
+            <input type="text" id="emp2_start" name="emp2_start" placeholder="e.g. September 2015">
+          </div>
+          <div class="form-row">
+            <label for="emp2_end">End Date</label>
+            <input type="text" id="emp2_end" name="emp2_end" placeholder="e.g. August 2019">
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="emp2_duties">Main Duties and Responsibilities</label>
+          <textarea id="emp2_duties" name="emp2_duties" rows="4" placeholder="Describe your key responsibilities…"></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-save" onclick="saveSection('employment')">Save Section</button>
+        <button class="btn-clear" onclick="show('education')">Next Section →</button>
+      </div>
+      <div class="saved-msg" id="saved-employment">✓ Employment History saved.</div>
+    </div>
+
+    <!-- Education -->
+    <div class="panel" id="panel-education">
+      <h2>Education &amp; Qualifications</h2>
+
+      <div class="entry-block">
+        <h3>Qualification 1 (Highest / Most Recent)</h3>
+        <div class="form-row">
+          <label for="edu1_institution">Institution <span class="req">*</span></label>
+          <input type="text" id="edu1_institution" name="edu1_institution" placeholder="University or college name">
+        </div>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="edu1_qualification">Qualification <span class="req">*</span></label>
+            <input type="text" id="edu1_qualification" name="edu1_qualification" placeholder="e.g. PGCE, BA, BSc">
+          </div>
+          <div class="form-row">
+            <label for="edu1_subject">Subject <span class="req">*</span></label>
+            <input type="text" id="edu1_subject" name="edu1_subject" placeholder="e.g. Mathematics">
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="edu1_grade">Grade / Class</label>
+            <input type="text" id="edu1_grade" name="edu1_grade" placeholder="e.g. 2:1, Pass, Distinction">
+          </div>
+          <div class="form-row">
+            <label for="edu1_year">Year Awarded <span class="req">*</span></label>
+            <input type="text" id="edu1_year" name="edu1_year" placeholder="e.g. 2015">
+          </div>
+        </div>
+      </div>
+
+      <div class="entry-block">
+        <h3>Qualification 2</h3>
+        <div class="form-row">
+          <label for="edu2_institution">Institution</label>
+          <input type="text" id="edu2_institution" name="edu2_institution" placeholder="University or college name">
+        </div>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="edu2_qualification">Qualification</label>
+            <input type="text" id="edu2_qualification" name="edu2_qualification" placeholder="e.g. BEng, HND">
+          </div>
+          <div class="form-row">
+            <label for="edu2_subject">Subject</label>
+            <input type="text" id="edu2_subject" name="edu2_subject" placeholder="e.g. Mechanical Engineering">
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="edu2_grade">Grade / Class</label>
+            <input type="text" id="edu2_grade" name="edu2_grade" placeholder="e.g. 2:1">
+          </div>
+          <div class="form-row">
+            <label for="edu2_year">Year Awarded</label>
+            <input type="text" id="edu2_year" name="edu2_year" placeholder="e.g. 2012">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-save" onclick="saveSection('education')">Save Section</button>
+        <button class="btn-clear" onclick="show('training')">Next Section →</button>
+      </div>
+      <div class="saved-msg" id="saved-education">✓ Education saved.</div>
+    </div>
+
+    <!-- Training & CPD -->
+    <div class="panel" id="panel-training">
+      <h2>Training &amp; Continuing Professional Development</h2>
+
+      <div class="entry-block">
+        <h3>CPD / Training 1</h3>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="cpd1_title">Course / Training Title</label>
+            <input type="text" id="cpd1_title" name="cpd1_title" placeholder="e.g. Award in Education and Training">
+          </div>
+          <div class="form-row">
+            <label for="cpd1_provider">Provider / Awarding Body</label>
+            <input type="text" id="cpd1_provider" name="cpd1_provider" placeholder="e.g. City &amp; Guilds">
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="cpd1_date">Date Completed</label>
+          <input type="text" id="cpd1_date" name="cpd1_date" placeholder="e.g. 2019">
+        </div>
+      </div>
+
+      <div class="entry-block">
+        <h3>CPD / Training 2</h3>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="cpd2_title">Course / Training Title</label>
+            <input type="text" id="cpd2_title" name="cpd2_title" placeholder="e.g. Mental Health First Aid">
+          </div>
+          <div class="form-row">
+            <label for="cpd2_provider">Provider / Awarding Body</label>
+            <input type="text" id="cpd2_provider" name="cpd2_provider" placeholder="e.g. St John Ambulance">
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="cpd2_date">Date Completed</label>
+          <input type="text" id="cpd2_date" name="cpd2_date" placeholder="e.g. 2022">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-save" onclick="saveSection('training')">Save Section</button>
+        <button class="btn-clear" onclick="show('statement')">Next Section →</button>
+      </div>
+      <div class="saved-msg" id="saved-training">✓ Training &amp; CPD saved.</div>
+    </div>
+
+    <!-- Supporting Statement -->
+    <div class="panel" id="panel-statement">
+      <h2>Supporting Statement</h2>
+      <p style="color:#555;margin-bottom:16px;font-size:13px;">
+        Please describe why you are applying for this role, how your experience and skills meet the requirements of the person specification, and what you would bring to Northgate College.
+      </p>
+      <div class="form-row">
+        <label for="statement">Supporting Statement <span class="req">*</span></label>
+        <textarea id="statement" name="statement" rows="12" placeholder="Write your supporting statement here (minimum 200 words)…"></textarea>
+        <div class="hint">Minimum 200 words. Maximum 1,000 words.</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-save" onclick="saveSection('statement')">Save Section</button>
+        <button class="btn-clear" onclick="show('references')">Next Section →</button>
+      </div>
+      <div class="saved-msg" id="saved-statement">✓ Supporting Statement saved.</div>
+    </div>
+
+    <!-- References -->
+    <div class="panel" id="panel-references">
+      <h2>References</h2>
+      <p style="color:#555;margin-bottom:16px;font-size:13px;">Please provide two professional referees. One should be your current or most recent employer.</p>
+
+      <div class="entry-block">
+        <h3>Referee 1</h3>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="ref1_name">Full Name <span class="req">*</span></label>
+            <input type="text" id="ref1_name" name="ref1_name" placeholder="Referee's full name">
+          </div>
+          <div class="form-row">
+            <label for="ref1_title">Job Title</label>
+            <input type="text" id="ref1_title" name="ref1_title" placeholder="e.g. Head of Department">
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="ref1_org">Organisation</label>
+          <input type="text" id="ref1_org" name="ref1_org" placeholder="Name of employer or institution">
+        </div>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="ref1_email">Email</label>
+            <input type="email" id="ref1_email" name="ref1_email" placeholder="referee@organisation.ac.uk">
+          </div>
+          <div class="form-row">
+            <label for="ref1_phone">Phone</label>
+            <input type="tel" id="ref1_phone" name="ref1_phone" placeholder="01234 567890">
+          </div>
+        </div>
+      </div>
+
+      <div class="entry-block">
+        <h3>Referee 2</h3>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="ref2_name">Full Name</label>
+            <input type="text" id="ref2_name" name="ref2_name" placeholder="Referee's full name">
+          </div>
+          <div class="form-row">
+            <label for="ref2_title">Job Title</label>
+            <input type="text" id="ref2_title" name="ref2_title" placeholder="e.g. Principal">
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="ref2_org">Organisation</label>
+          <input type="text" id="ref2_org" name="ref2_org" placeholder="Name of employer or institution">
+        </div>
+        <div class="two-col">
+          <div class="form-row">
+            <label for="ref2_email">Email</label>
+            <input type="email" id="ref2_email" name="ref2_email" placeholder="referee@organisation.ac.uk">
+          </div>
+          <div class="form-row">
+            <label for="ref2_phone">Phone</label>
+            <input type="tel" id="ref2_phone" name="ref2_phone" placeholder="01234 567890">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-save" onclick="saveSection('references')">Save Section</button>
+        <button class="btn-clear" onclick="show('declaration')">Next Section →</button>
+      </div>
+      <div class="saved-msg" id="saved-references">✓ References saved.</div>
+    </div>
+
+    <!-- Declaration -->
+    <div class="panel" id="panel-declaration">
+      <h2>Declaration</h2>
+      <p style="line-height:1.7;color:#444;margin-bottom:20px;">
+        I confirm that the information given in this application form is true and complete to the best of my knowledge.
+        I understand that any false information may lead to the withdrawal of any offer of employment or dismissal.
+        I consent to this information being held and processed in accordance with the Data Protection Act 2018.
+      </p>
+      <div class="form-row">
+        <label style="display:flex;align-items:flex-start;gap:10px;font-weight:normal;cursor:pointer;">
+          <input type="checkbox" id="declaration_agree" name="declaration_agree" style="width:18px;height:18px;flex-shrink:0;margin-top:2px;">
+          <span>I confirm the above declaration is true and accurate. <span class="req">*</span></span>
+        </label>
+      </div>
+      <div class="form-row" style="margin-top:16px;">
+        <label for="declaration_date">Date <span class="req">*</span></label>
+        <input type="text" id="declaration_date" name="declaration_date" placeholder="e.g. 12 June 2026" style="max-width:200px;">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-save" onclick="saveSection('declaration')" style="background:#2d7a2d;">Submit Application</button>
+      </div>
+      <div class="saved-msg" id="saved-declaration">
+        ✓ Application submitted successfully. Thank you — you will receive a confirmation email shortly.
+        <br><br><em style="font-size:12px;">This is a test form. No data has been sent anywhere.</em>
+      </div>
+    </div>
+
+  </div><!-- /panels -->
+</div><!-- /container -->
+
+<script>
+  function show(section) {
+    // Hide all panels
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    // Deactivate all nav buttons
+    document.querySelectorAll('.nav button').forEach(b => {
+      if (!b.classList.contains('done')) b.classList.remove('active');
+    });
+    // Show selected
+    document.getElementById('panel-' + section).classList.add('active');
+    document.getElementById('nav-' + section).classList.add('active');
+    // Scroll to top of panels
+    window.scrollTo(0, 0);
+  }
+
+  function saveSection(section) {
+    const msg = document.getElementById('saved-' + section);
+    msg.style.display = 'block';
+    const btn = document.getElementById('nav-' + section);
+    btn.classList.add('done');
+    btn.classList.remove('active');
+    setTimeout(() => { msg.style.display = 'none'; }, 3000);
+  }
+</script>
+
+</body>
+</html>
