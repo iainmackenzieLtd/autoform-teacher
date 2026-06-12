@@ -96,13 +96,29 @@ st.subheader("Step 1 — Enter the form URL")
 url = st.text_input("URL", label_visibility="collapsed",
                     placeholder="https://...")
 
-col_read, col_link = st.columns([2, 3])
+col_read, col_agent, col_login, col_link = st.columns([2, 2, 3, 2])
 with col_read:
-    read_clicked = st.button("Read Form", type="primary",
-                             help="Reads the HTML structure of the form to match fields to your profile.")
+    read_clicked = st.button("Read Form", type="primary", use_container_width=True,
+                             help="Reads the HTML structure — fast and cheap. Best for simple open forms.")
+with col_agent:
+    agent_clicked = st.button("🤖 Launch Agent", use_container_width=True,
+                              help="Claude fills the form visually. Works on any form type.")
+with col_login:
+    needs_login = st.checkbox(
+        "Requires manual login",
+        help=(
+            "Tick for login-required portals. The browser opens and pauses — "
+            "log in yourself, then click Resume in the Playwright Inspector."
+        )
+    )
 with col_link:
     if "url" in st.session_state:
-        st.link_button("Open form in new tab ↗", st.session_state.url)
+        st.link_button("Open in new tab ↗", st.session_state.url)
+
+st.caption(
+    "🤖 Agent mode sends browser screenshots to the Claude API. "
+    "Use the mock profile when testing on unfamiliar sites."
+)
 
 if read_clicked and url:
     with st.spinner("Reading form..."):
@@ -122,33 +138,6 @@ if read_clicked and url:
             webbrowser.open_new_tab(url)
         except Exception as e:
             st.error(f"Could not read form: {e}")
-
-# ── AI Agent path (works even without reading the form first) ─────────────────
-st.divider()
-st.subheader("🤖 AI Agent — fill any form visually")
-st.caption(
-    "Claude sees screenshots of the browser and fills the form like a human — "
-    "clicking, typing, scrolling. Works on any form type, including login-required portals. "
-    "No need to read the form first."
-)
-st.warning(
-    "**Privacy note:** screenshots of the browser are sent to the Claude API during this process. "
-    "Use the mock profile when testing on unfamiliar forms.",
-    icon="⚠️"
-)
-
-col_chk, col_launch = st.columns([3, 1])
-with col_chk:
-    needs_login = st.checkbox(
-        "This form requires manual login",
-        help=(
-            "Tick this for login-required portals. The browser will open and pause. "
-            "Log in yourself, navigate to the form, then click Resume in the "
-            "Playwright Inspector window to hand control to the agent."
-        )
-    )
-with col_launch:
-    agent_clicked = st.button("Launch Agent", use_container_width=True)
 
 if agent_clicked:
     if not url:
