@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bridgewater Academy — Teaching Application</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      background: #f0f2f5;
+      color: #222;
+    }
+
+    header {
+      background: #2c5f2e;
+      color: white;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .logo { width: 52px; height: 52px; background: #4a8c4c; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; font-weight: bold; }
+    header h1 { font-size: 20px; }
+    header p  { font-size: 12px; opacity: 0.8; margin-top: 3px; }
+
+    .notice {
+      background: #fff3cd; border-left: 4px solid #e6a817;
+      padding: 10px 40px; font-size: 13px; color: #5a4000;
+    }
+
+    /* ── Step indicator ── */
+    .wizard-header {
+      background: white;
+      border-bottom: 1px solid #ddd;
+      padding: 16px 40px;
+    }
+    .step-track {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      max-width: 700px;
+    }
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      position: relative;
+    }
+    .step-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: 60%;
+      width: 80%;
+      height: 2px;
+      background: #ccc;
+    }
+    .step-item.done::after   { background: #2c5f2e; }
+    .step-item.active::after { background: #ccc; }
+
+    .step-circle {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: bold;
+      background: #e0e0e0; color: #888;
+      position: relative; z-index: 1;
+    }
+    .step-item.done   .step-circle { background: #2c5f2e; color: white; }
+    .step-item.active .step-circle { background: #4a8c4c; color: white; border: 2px solid #2c5f2e; }
+
+    .step-label {
+      font-size: 11px; margin-top: 4px; color: #888; text-align: center;
+    }
+    .step-item.active .step-label { color: #2c5f2e; font-weight: bold; }
+    .step-item.done   .step-label { color: #2c5f2e; }
+
+    .step-title {
+      font-size: 16px; font-weight: bold; color: #2c5f2e;
+      margin-top: 12px;
+    }
+    .step-subtitle { font-size: 13px; color: #666; margin-top: 2px; }
+
+    /* ── Form container ── */
+    .container {
+      max-width: 780px;
+      margin: 28px auto;
+      background: white;
+      padding: 36px 40px;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .form-row { display: flex; gap: 18px; margin-bottom: 16px; }
+    .form-group { display: flex; flex-direction: column; flex: 1; }
+    .form-group.narrow { flex: 0 0 130px; }
+    .form-group.wide   { flex: 2; }
+
+    label { font-size: 13px; font-weight: bold; margin-bottom: 4px; color: #333; }
+    label .req { color: #c0392b; margin-left: 2px; }
+    label .hint { font-weight: normal; font-size: 12px; color: #666; display: block; margin-top: 1px; }
+
+    input[type="text"], input[type="email"], input[type="tel"],
+    select, textarea {
+      border: 1px solid #bbb; border-radius: 3px;
+      padding: 7px 9px; font-size: 14px; font-family: Arial, sans-serif; width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: #2c5f2e;
+      box-shadow: 0 0 0 2px rgba(44,95,46,0.15);
+    }
+    textarea { resize: vertical; }
+
+    .radio-group { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+    .radio-group.inline { flex-direction: row; gap: 20px; }
+    .radio-group label { font-weight: normal; display: flex; align-items: center; gap: 7px; cursor: pointer; }
+    input[type="radio"], input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+
+    .check-group { display: flex; flex-direction: column; gap: 8px; }
+    .check-group label { font-weight: normal; display: flex; align-items: flex-start; gap: 8px; cursor: pointer; line-height: 1.4; }
+
+    .section-note {
+      background: #edf5ee; border: 1px solid #b8d9ba; border-radius: 3px;
+      padding: 10px 14px; font-size: 13px; color: #2c5f2e; margin-bottom: 18px;
+    }
+    .divider { border: none; border-top: 1px solid #e8e8e8; margin: 16px 0 20px; }
+
+    /* ── Navigation buttons ── */
+    .nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+    .btn {
+      padding: 10px 28px; border-radius: 3px; font-size: 14px;
+      border: none; cursor: pointer; font-family: Arial, sans-serif;
+    }
+    .btn-back    { background: #f0f0f0; color: #444; border: 1px solid #ccc; }
+    .btn-back:hover { background: #e0e0e0; }
+    .btn-next    { background: #2c5f2e; color: white; }
+    .btn-next:hover { background: #3a7a3d; }
+    .btn-submit  { background: #1a3a5c; color: white; }
+    .btn-submit:hover { background: #2e6da4; }
+    .btn-placeholder { visibility: hidden; width: 110px; }
+
+    .confirmation {
+      display: none; background: #d4edda; border: 1px solid #28a745;
+      border-radius: 4px; padding: 16px; margin-top: 20px; color: #155724;
+    }
+
+    footer {
+      text-align: center; padding: 20px; font-size: 12px; color: #999;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">B</div>
+  <div>
+    <h1>Bridgewater Academy</h1>
+    <p>Online Teaching Application — complete all sections to submit</p>
+  </div>
+</header>
+
+<div class="notice">
+  &#9432; This is a <strong>synthetic test form</strong> — AutoForm development only. No data is submitted.
+</div>
+
+<!-- ── Step indicator ── -->
+<div class="wizard-header">
+  <div class="step-track" id="stepTrack">
+    <div class="step-item active" id="si1">
+      <div class="step-circle">1</div>
+      <div class="step-label">Personal</div>
+    </div>
+    <div class="step-item" id="si2">
+      <div class="step-circle">2</div>
+      <div class="step-label">Employment</div>
+    </div>
+    <div class="step-item" id="si3">
+      <div class="step-circle">3</div>
+      <div class="step-label">Qualifications</div>
+    </div>
+    <div class="step-item" id="si4">
+      <div class="step-circle">4</div>
+      <div class="step-label">Statement</div>
+    </div>
+    <div class="step-item" id="si5">
+      <div class="step-circle">5</div>
+      <div class="step-label">References &amp; Declaration</div>
+    </div>
+  </div>
+  <div class="step-title" id="stepTitle">Step 1 of 5: Personal Details</div>
+  <div class="step-subtitle" id="stepSubtitle">Please complete all required fields before continuing.</div>
+</div>
+
+<div class="container">
+
+  <!-- ══════════════════ PAGE 1 — PERSONAL DETAILS ══════════════════ -->
+  <div class="page active" id="page1">
+
+    <div class="form-row">
+      <div class="form-group narrow">
+        <label for="title">Title <span class="req">*</span></label>
+        <select id="title" name="title">
+          <option value="">— select —</option>
+          <option>Mr</option><option>Mrs</option><option>Ms</option>
+          <option>Miss</option><option>Dr</option><option>Prof</option><option>Mx</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="first_name">First name <span class="req">*</span></label>
+        <input type="text" id="first_name" name="first_name">
+      </div>
+      <div class="form-group">
+        <label for="last_name">Last name <span class="req">*</span></label>
+        <input type="text" id="last_name" name="last_name">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="dob">Date of birth <span class="req">*</span></label>
+        <input type="text" id="dob" name="dob" placeholder="DD/MM/YYYY">
+      </div>
+      <div class="form-group">
+        <label for="nationality">Nationality <span class="req">*</span></label>
+        <input type="text" id="nationality" name="nationality">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="email">Email address <span class="req">*</span></label>
+        <input type="email" id="email" name="email">
+      </div>
+      <div class="form-group">
+        <label for="phone">Telephone <span class="req">*</span></label>
+        <input type="tel" id="phone" name="phone">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="address">Home address <span class="req">*</span></label>
+        <textarea id="address" name="address" rows="3"
+          placeholder="House number and street, town, county"></textarea>
+      </div>
+      <div class="form-group narrow">
+        <label for="postcode">Postcode <span class="req">*</span></label>
+        <input type="text" id="postcode" name="postcode">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Are you entitled to work in the UK? <span class="req">*</span></label>
+        <div class="radio-group inline">
+          <label><input type="radio" name="rtw" value="yes"> Yes</label>
+          <label><input type="radio" name="rtw" value="no"> No</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="ni">National Insurance number</label>
+        <input type="text" id="ni" name="ni" placeholder="e.g. AB 12 34 56 C">
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <div class="btn-placeholder"></div>
+      <button class="btn btn-next" onclick="goTo(2)">Next: Employment History →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════ PAGE 2 — EMPLOYMENT HISTORY ══════════════════ -->
+  <div class="page" id="page2">
+
+    <p class="section-note">List your most recent post first. Include all employment since leaving full-time education.</p>
+
+    <strong style="display:block;margin-bottom:10px;color:#2c5f2e;">Most Recent Post</strong>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="emp1_org">Employer / School <span class="req">*</span></label>
+        <input type="text" id="emp1_org" name="emp1_org">
+      </div>
+      <div class="form-group">
+        <label for="emp1_title">Job title <span class="req">*</span></label>
+        <input type="text" id="emp1_title" name="emp1_title">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group narrow">
+        <label for="emp1_start">Start date <span class="req">*</span></label>
+        <input type="text" id="emp1_start" name="emp1_start" placeholder="MM/YYYY">
+      </div>
+      <div class="form-group narrow">
+        <label for="emp1_end">End date</label>
+        <input type="text" id="emp1_end" name="emp1_end" placeholder="Present">
+      </div>
+      <div class="form-group">
+        <label for="emp1_reason">Reason for leaving</label>
+        <input type="text" id="emp1_reason" name="emp1_reason">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="emp1_duties">Key responsibilities <span class="req">*</span></label>
+        <textarea id="emp1_duties" name="emp1_duties" rows="4"
+          placeholder="Describe your main duties in this role."></textarea>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <strong style="display:block;margin-bottom:10px;color:#2c5f2e;">Previous Post</strong>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="emp2_org">Employer / School</label>
+        <input type="text" id="emp2_org" name="emp2_org">
+      </div>
+      <div class="form-group">
+        <label for="emp2_title">Job title</label>
+        <input type="text" id="emp2_title" name="emp2_title">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group narrow">
+        <label for="emp2_start">Start date</label>
+        <input type="text" id="emp2_start" name="emp2_start" placeholder="MM/YYYY">
+      </div>
+      <div class="form-group narrow">
+        <label for="emp2_end">End date</label>
+        <input type="text" id="emp2_end" name="emp2_end" placeholder="MM/YYYY">
+      </div>
+      <div class="form-group">
+        <label for="emp2_duties">Key responsibilities</label>
+        <textarea id="emp2_duties" name="emp2_duties" rows="3"></textarea>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Are you currently employed? <span class="req">*</span></label>
+        <div class="radio-group inline">
+          <label><input type="radio" name="currently_employed" value="yes"> Yes</label>
+          <label><input type="radio" name="currently_employed" value="no"> No</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="notice_period">Notice period (if applicable)</label>
+        <select id="notice_period" name="notice_period">
+          <option value="">— select —</option>
+          <option>Less than 1 month</option>
+          <option>1 month</option>
+          <option>2 months</option>
+          <option>3 months</option>
+          <option>More than 3 months</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <button class="btn btn-back" onclick="goTo(1)">← Back</button>
+      <button class="btn btn-next" onclick="goTo(3)">Next: Qualifications →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════ PAGE 3 — QUALIFICATIONS ══════════════════ -->
+  <div class="page" id="page3">
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="highest_qual">Highest qualification <span class="req">*</span></label>
+        <select id="highest_qual" name="highest_qual">
+          <option value="">— select —</option>
+          <option>PGCE</option><option>QTS (Assessment Only)</option>
+          <option>BA (Hons)</option><option>BSc (Hons)</option>
+          <option>MA</option><option>MSc</option><option>MEd</option>
+          <option>PhD</option><option>HND</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="qual_subject">Subject <span class="req">*</span></label>
+        <input type="text" id="qual_subject" name="qual_subject">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="qual_institution">Awarding institution <span class="req">*</span></label>
+        <input type="text" id="qual_institution" name="qual_institution">
+      </div>
+      <div class="form-group narrow">
+        <label for="qual_year">Year awarded <span class="req">*</span></label>
+        <input type="text" id="qual_year" name="qual_year" placeholder="YYYY">
+      </div>
+      <div class="form-group narrow">
+        <label for="qual_grade">Grade</label>
+        <input type="text" id="qual_grade" name="qual_grade" placeholder="e.g. 2:1">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Do you hold Qualified Teacher Status (QTS)? <span class="req">*</span></label>
+        <div class="radio-group inline">
+          <label><input type="radio" name="qts" value="yes"> Yes</label>
+          <label><input type="radio" name="qts" value="no"> No</label>
+          <label><input type="radio" name="qts" value="pending"> In progress</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="trn">Teacher Reference Number (TRN)</label>
+        <input type="text" id="trn" name="trn" placeholder="7-digit number">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="dbs_status">DBS check <span class="req">*</span></label>
+        <select id="dbs_status" name="dbs_status">
+          <option value="">— select —</option>
+          <option>Enhanced DBS — within 3 years</option>
+          <option>Enhanced DBS — more than 3 years ago</option>
+          <option>Basic DBS only</option>
+          <option>In progress</option>
+          <option>None</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="cpd_summary">Recent CPD / training</label>
+        <textarea id="cpd_summary" name="cpd_summary" rows="3"
+          placeholder="List any relevant recent professional development."></textarea>
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <button class="btn btn-back" onclick="goTo(2)">← Back</button>
+      <button class="btn btn-next" onclick="goTo(4)">Next: Supporting Statement →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════ PAGE 4 — SUPPORTING STATEMENT ══════════════════ -->
+  <div class="page" id="page4">
+
+    <p class="section-note">
+      Please tell us why you are applying for this post and how your skills and experience
+      match the person specification. <strong>Maximum 600 words.</strong>
+    </p>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="statement">Supporting statement <span class="req">*</span></label>
+        <textarea id="statement" name="statement" rows="14"
+          placeholder="Write your supporting statement here…" maxlength="4200"></textarea>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="why_school">Why do you want to work at Bridgewater Academy specifically?</label>
+        <textarea id="why_school" name="why_school" rows="4"
+          placeholder="Optional — tell us what attracted you to this school."></textarea>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="availability">Earliest available start date</label>
+        <input type="text" id="availability" name="availability" placeholder="e.g. September 2026">
+      </div>
+      <div class="form-group">
+        <label for="salary_expected">Current or expected salary</label>
+        <input type="text" id="salary_expected" name="salary_expected" placeholder="e.g. MPS 4 / £35,000">
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <button class="btn btn-back" onclick="goTo(3)">← Back</button>
+      <button class="btn btn-next" onclick="goTo(5)">Next: References &amp; Declaration →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════ PAGE 5 — REFERENCES & DECLARATION ══════════════════ -->
+  <div class="page" id="page5">
+
+    <p class="section-note">
+      Please provide two referees. The first must be your current or most recent line manager.
+      References will only be taken up if you are offered the post.
+    </p>
+
+    <strong style="display:block;margin-bottom:10px;color:#2c5f2e;">Referee 1 — Current or Most Recent Employer</strong>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="ref1_name">Full name <span class="req">*</span></label>
+        <input type="text" id="ref1_name" name="ref1_name">
+      </div>
+      <div class="form-group">
+        <label for="ref1_title">Job title <span class="req">*</span></label>
+        <input type="text" id="ref1_title" name="ref1_title">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="ref1_org">Organisation <span class="req">*</span></label>
+        <input type="text" id="ref1_org" name="ref1_org">
+      </div>
+      <div class="form-group">
+        <label for="ref1_email">Email <span class="req">*</span></label>
+        <input type="email" id="ref1_email" name="ref1_email">
+      </div>
+      <div class="form-group narrow">
+        <label for="ref1_phone">Phone</label>
+        <input type="tel" id="ref1_phone" name="ref1_phone">
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <strong style="display:block;margin-bottom:10px;color:#2c5f2e;">Referee 2</strong>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="ref2_name">Full name <span class="req">*</span></label>
+        <input type="text" id="ref2_name" name="ref2_name">
+      </div>
+      <div class="form-group">
+        <label for="ref2_title">Job title <span class="req">*</span></label>
+        <input type="text" id="ref2_title" name="ref2_title">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="ref2_org">Organisation <span class="req">*</span></label>
+        <input type="text" id="ref2_org" name="ref2_org">
+      </div>
+      <div class="form-group">
+        <label for="ref2_email">Email <span class="req">*</span></label>
+        <input type="email" id="ref2_email" name="ref2_email">
+      </div>
+      <div class="form-group narrow">
+        <label for="ref2_phone">Phone</label>
+        <input type="tel" id="ref2_phone" name="ref2_phone">
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <strong style="display:block;margin-bottom:10px;color:#2c5f2e;">Declaration</strong>
+    <div class="check-group" style="margin-bottom:20px;">
+      <label>
+        <input type="checkbox" name="decl1">
+        I confirm that all information given in this application is true, complete and accurate.
+      </label>
+      <label>
+        <input type="checkbox" name="decl2">
+        I consent to my personal data being processed by Bridgewater Academy for recruitment purposes.
+      </label>
+      <label>
+        <input type="checkbox" name="decl3">
+        I understand that this role involves working with children and I support the school's commitment to safeguarding.
+      </label>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="signature">Full name (as signature) <span class="req">*</span></label>
+        <input type="text" id="signature" name="signature">
+      </div>
+      <div class="form-group narrow">
+        <label for="sign_date">Date <span class="req">*</span></label>
+        <input type="text" id="sign_date" name="sign_date" placeholder="DD/MM/YYYY">
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <button class="btn btn-back" onclick="goTo(4)">← Back</button>
+      <button class="btn btn-submit" onclick="handleSubmit()">Submit Application</button>
+    </div>
+
+    <div class="confirmation" id="confirmation">
+      &#10003; <strong>Test submission recorded.</strong>
+      No data was sent anywhere — this is a synthetic test form for AutoForm development.
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<footer>
+  Bridgewater Academy &mdash; synthetic multi-step wizard test form &mdash; AutoForm project
+</footer>
+
+<script>
+  const titles = [
+    "", // placeholder for index 0
+    "Step 1 of 5: Personal Details",
+    "Step 2 of 5: Employment History",
+    "Step 3 of 5: Education &amp; Qualifications",
+    "Step 4 of 5: Supporting Statement",
+    "Step 5 of 5: References &amp; Declaration"
+  ];
+  const subtitles = [
+    "",
+    "Your contact information and right to work.",
+    "List all posts since leaving full-time education.",
+    "Your teaching qualifications and professional status.",
+    "Why you are the right person for this role.",
+    "Referees and your declaration."
+  ];
+
+  let current = 1;
+
+  function goTo(n) {
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page' + n).classList.add('active');
+
+    // Update step indicators
+    for (let i = 1; i <= 5; i++) {
+      const si = document.getElementById('si' + i);
+      si.classList.remove('active', 'done');
+      if (i < n)  si.classList.add('done');
+      if (i === n) si.classList.add('active');
+    }
+
+    document.getElementById('stepTitle').innerHTML   = titles[n];
+    document.getElementById('stepSubtitle').textContent = subtitles[n];
+    current = n;
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function handleSubmit() {
+    document.getElementById('confirmation').style.display = 'block';
+    window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+  }
+</script>
+
+</body>
+</html>

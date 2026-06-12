@@ -71,7 +71,7 @@ st.subheader("Enter the form URL")
 url = st.text_input("URL", label_visibility="collapsed",
                     placeholder="https://...  or  file:///home/...")
 
-col_btn, col_chk, col_link = st.columns([2, 3, 2])
+col_btn, col_chk = st.columns([2, 4])
 
 with col_btn:
     agent_clicked = st.button("🤖 Launch Agent", type="primary",
@@ -85,9 +85,6 @@ with col_chk:
             "Playwright Inspector window to hand control to the agent."
         )
     )
-with col_link:
-    if "last_url" in st.session_state:
-        st.link_button("Open in new tab ↗", st.session_state.last_url)
 
 st.caption(
     "⚠️ Agent mode sends browser screenshots to the Claude API. "
@@ -114,18 +111,36 @@ if st.session_state.get("agent_run"):
     steps_log = []
 
     st.info("Agent is working — watch the browser window.")
-    progress_bar = st.progress(0, text="Starting…")
-    status_line  = st.empty()
+    progress_bar  = st.progress(0, text="Starting…")
+    status_line   = st.empty()
+    metrics_slot  = st.empty()
+
+    state = {"step": 0, "tok_in": 0, "tok_out": 0}
+
+    def _redraw_metrics():
+        cost = (state["tok_in"] * 5 + state["tok_out"] * 25) / 1_000_000
+        with metrics_slot.container():
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Model",   "claude-opus-4-8")
+            m2.metric("Step",    f"{state['step']} / {MAX_STEPS}")
+            m3.metric("Tokens",  f"{state['tok_in']:,}")
+            m4.metric("Cost",    f"~${cost:.3f}")
+
+    _redraw_metrics()
 
     def _on_step(n, desc):
+        state["step"] = n
         steps_log.append(f"Step {n}: {desc}")
-        progress_bar.progress(
-            min(n / MAX_STEPS, 1.0),
-            text=f"Step {n} of up to {MAX_STEPS}"
-        )
-        # Show meaningful actions; skip internal screenshot messages
+        progress_bar.progress(min(n / MAX_STEPS, 1.0),
+                              text=f"Step {n} of up to {MAX_STEPS}")
         if "screenshot" not in desc.lower():
             status_line.caption(f"↳ {desc}")
+        _redraw_metrics()
+
+    def _on_tokens(tok_in, tok_out):
+        state["tok_in"]  = tok_in
+        state["tok_out"] = tok_out
+        _redraw_metrics()
 
     try:
         with sync_playwright() as pw:
@@ -139,6 +154,7 @@ if st.session_state.get("agent_run"):
             n_steps, completed, done_reason, tok_in, tok_out = run_form_agent(
                 page, profile,
                 on_step=_on_step,
+                on_tokens=_on_tokens,
                 max_steps=MAX_STEPS,
                 pause_for_login=pause_login
             )
@@ -151,17 +167,9 @@ if st.session_state.get("agent_run"):
 
         progress_bar.progress(1.0, text="Complete")
         status_line.empty()
-
-        # ── Metrics row ───────────────────────────────────────────────────────
-        cost_usd = (tok_in * 5 + tok_out * 25) / 1_000_000
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Model",          "claude-opus-4-8")
-        m2.metric("Steps used",     f"{n_steps} / {MAX_STEPS}")
-        m3.metric("Tokens sent",    f"{tok_in:,}")
-        m4.metric("Estimated cost", f"~${cost_usd:.2f}")
+        _redraw_metrics()  # final values
 
         st.divider()
-
         # ── Completion message ────────────────────────────────────────────────
         if completed:
             st.success(f"✓  Agent completed the form in {n_steps} steps.")

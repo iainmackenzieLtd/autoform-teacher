@@ -168,7 +168,7 @@ def _execute_actions(page, actions):
     return descriptions, False
 
 
-def run_form_agent(page, profile, on_step=None, max_steps=35, pause_for_login=False):
+def run_form_agent(page, profile, on_step=None, on_tokens=None, max_steps=35, pause_for_login=False):
     """
     Fill the form visible in `page` using Claude vision.
 
@@ -231,7 +231,11 @@ Do NOT re-fill fields you have already filled.
 Do NOT invent data — leave a field blank if you have nothing for it.
 Do NOT click Submit, Apply, or any button that sends the form.
 
-When you have scrolled to the bottom and filled everything visible, return:
+If the form has multiple pages (you see a "Next", "Next Page", or "Continue" button),
+fill all visible fields on the current page, then click that button to advance.
+Only return done when you have completed the final page and there are no more pages to fill.
+
+When you have completed the entire form, return:
 [{{"action": "done", "reason": "Form filled. Please review all fields carefully, then click Submit when you are ready to apply."}}]
 
 Return ONLY a JSON array — no explanation, no markdown, just the array.
@@ -294,6 +298,8 @@ The select_option action sets the value directly and reliably without opening a 
         messages.append({"role": "assistant", "content": response.content})
         total_input_tokens  += response.usage.input_tokens
         total_output_tokens += response.usage.output_tokens
+        if on_tokens:
+            on_tokens(total_input_tokens, total_output_tokens)
 
         raw = response.content[0].text.strip()
 
