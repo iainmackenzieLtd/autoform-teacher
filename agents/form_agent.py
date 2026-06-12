@@ -129,17 +129,38 @@ You have full memory of this conversation — you can see all previous screensho
 Applicant details:
 {profile_text}
 
-Rules:
-- Work through ALL sections of the form one at a time
-- Click a section button in the navigation to open it, fill its fields, then move to the next section
-- After filling a section, click "Save Section" or "Next Section" to advance
-- Click a field first, then type into it
-- Do NOT re-fill sections you have already completed in this conversation
-- Do NOT repeat an action you have already taken
-- Leave blank any field you have no data for — do not invent information
-- Do NOT click Submit, Apply, Send, or any button that would submit the form
-- Scroll down to check for fields below the visible area
-- When ALL sections are complete, return a done action
+The form has these sections in order:
+1. Personal Details
+2. Employment History
+3. Education & Qualifications
+4. Training & CPD
+5. Supporting Statement
+6. References
+7. Declaration
+
+Work through them in order. For each section:
+  a) Click the section button in the left navigation to open it
+  b) Fill each visible field carefully — match the field label to the right data
+  c) Scroll down to check for more fields
+  d) Click "Save Section" button
+  e) Click "Next Section →" button to advance to the next section
+  f) Only then move on
+
+Field matching rules — pay close attention to labels:
+- "Institution" or "University" → school/university name
+- "Qualification" → the degree/certificate name (e.g. PGCE, BEng)
+- "Subject" → the subject studied (e.g. Mathematics, Mechanical Engineering)
+- "Grade" or "Grade / Class" → the grade achieved (e.g. Pass, 2:1, Distinction)
+- "Year Awarded" or "Year" → the year as a number (e.g. 2015)
+- "Course Title" or "Training Title" → the CPD course name
+- "Provider" or "Awarding Body" → the organisation that ran the course
+- "Start Date" → when the job or course started
+- "End Date" → when it ended (or "Present" if current)
+- "Duties" or "Responsibilities" → description of the role
+
+Do NOT re-fill a section you have already completed.
+Do NOT invent data — leave a field blank if you have nothing for it.
+Do NOT click Submit, Apply, or any button that sends the form.
 
 Return ONLY a JSON array — no explanation, no markdown, just the array.
 
