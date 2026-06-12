@@ -37,6 +37,28 @@ def discover_profiles():
 
 # ── Page setup ────────────────────────────────────────────────────────────────
 st.set_page_config(page_title="AutoForm", layout="wide")
+
+st.markdown("""
+<style>
+/* Captions — used in model/token info box and warnings */
+[data-testid="stCaptionContainer"] p { font-size: 1rem !important; line-height: 1.5; }
+
+/* Metric value (big number) */
+[data-testid="stMetricValue"]  { font-size: 2rem !important; }
+
+/* Metric label (small label above value) */
+[data-testid="stMetricLabel"]  { font-size: 1rem !important; }
+
+/* Metric delta (Running / Done text below value) */
+[data-testid="stMetricDelta"] svg { display: none; }
+[data-testid="stMetricDelta"]  { font-size: 0.95rem !important; }
+
+/* Sidebar text */
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] li { font-size: 0.95rem !important; }
+</style>
+""", unsafe_allow_html=True)
+
 st.title("AutoForm")
 st.caption("Fill any job application form from your profile — automatically.")
 
