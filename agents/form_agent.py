@@ -144,7 +144,7 @@ def _execute_actions(page, actions):
     return descriptions, False
 
 
-def run_form_agent(page, profile, on_step=None, max_steps=25, pause_for_login=False):
+def run_form_agent(page, profile, on_step=None, max_steps=35, pause_for_login=False):
     """
     Fill the form visible in `page` using Claude vision.
 
@@ -154,7 +154,7 @@ def run_form_agent(page, profile, on_step=None, max_steps=25, pause_for_login=Fa
     max_steps       — safety cap on screenshot→action loops
     pause_for_login — if True, opens Playwright Inspector; user logs in then clicks Resume
 
-    Returns: number of steps taken.
+    Returns: (steps_taken, completed) where completed=True means agent signalled done.
     """
     if pause_for_login:
         page.pause()
@@ -168,24 +168,23 @@ You have full memory of this conversation — you can see all previous screensho
 Applicant details:
 {profile_text}
 
-The form has these sections in order:
-1. Personal Details
-2. Employment History
-3. Education & Qualifications
-4. Training & CPD
-5. Supporting Statement
-6. References
-7. Declaration
-
-Work through them in order. For each section:
-  a) Click the section button in the left navigation to open it
-  b) Fill each visible field carefully — match the field label to the right data
-  c) Scroll down to check for more fields
-  d) Click "Save Section" button
-  e) Click "Next Section →" button to advance to the next section
-  f) Only then move on
+Work through the form top to bottom, scrolling down to find all fields.
 
 Field matching rules — pay close attention to labels:
+- "Title" → use the title field (Mr, Ms, Dr etc)
+- "First name" / "Forename" → first name only
+- "Last name" / "Surname" → last name only
+- "Full name" → complete name
+- "Date of birth" → date of birth (DD/MM/YYYY format)
+- "Address" → street address
+- "Postcode" → postcode only
+- "Nationality" → nationality
+- "Right to work" → right to work answer (Yes/No)
+- "Visa" or "work permit" → visa required answer (Yes/No)
+- "NI number" or "National Insurance" → NI number
+- "DBS" → DBS status or DBS number as appropriate
+- "Teacher Reference" or "TRN" → teacher reference number
+- "QTS" → QTS status (Yes/No/In progress)
 - "Institution" or "University" → school/university name
 - "Qualification" → the degree/certificate name (e.g. PGCE, BEng)
 - "Subject" → the subject studied (e.g. Mathematics, Mechanical Engineering)
@@ -196,10 +195,20 @@ Field matching rules — pay close attention to labels:
 - "Start Date" → when the job or course started
 - "End Date" → when it ended (or "Present" if current)
 - "Duties" or "Responsibilities" → description of the role
+- "Date" as a standalone field near a signature → today's date in DD/MM/YYYY format
+- "Referee" fields → use the referees from the profile
+- "Supporting statement" → use the supporting statement from the profile
 
-Do NOT re-fill a section you have already completed.
+For dropdowns: click the dropdown and select the closest matching option.
+For radio buttons: click the correct option.
+For checkboxes in a declaration: tick all of them.
+
+Do NOT re-fill fields you have already filled.
 Do NOT invent data — leave a field blank if you have nothing for it.
 Do NOT click Submit, Apply, or any button that sends the form.
+
+When you have scrolled to the bottom and filled everything visible, return:
+[{{"action": "done", "reason": "Form filled. Please review all fields carefully, then click Submit when you are ready to apply."}}]
 
 Return ONLY a JSON array — no explanation, no markdown, just the array.
 
@@ -208,10 +217,12 @@ Available actions:
   {{"action": "type", "text": "<text to type>"}}
   {{"action": "scroll_down"}}
   {{"action": "key", "key": "<Tab|Enter|Escape>"}}
-  {{"action": "done", "reason": "<summary of what was filled>"}}"""
+  {{"action": "done", "reason": "<message for the user>"}}"""
 
     messages = []  # Full conversation history so Claude remembers previous steps
     steps_taken = 0
+    completed = False
+    done_reason = ""
 
     for step in range(max_steps):
         if on_step:
@@ -233,10 +244,10 @@ Available actions:
                 {
                     "type": "text",
                     "text": (
-                        f"Step {step + 1}. This is the current state of the browser. "
+                        f"Step {step + 1} of {max_steps}. This is the current state of the browser. "
                         "Check what you have already done above, then return JSON actions "
-                        "for the next thing to fill. If all sections are complete, return "
-                        "[{\"action\": \"done\"}]."
+                        "for the next thing to fill. When you have filled everything visible "
+                        "and scrolled to the bottom, return [{\"action\": \"done\", \"reason\": \"...\"}]."
                     )
                 }
             ]
@@ -276,8 +287,13 @@ Available actions:
                 on_step(steps_taken, desc)
 
         if done:
+            completed = True
+            # Capture the reason from the done action for the UI
+            for act in actions:
+                if act.get("action") == "done":
+                    done_reason = act.get("reason", "")
             break
 
         page.wait_for_timeout(600)
 
-    return steps_taken
+    return steps_taken, completed, done_reason

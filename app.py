@@ -120,7 +120,7 @@ if st.session_state.get("agent_run"):
             ctx  = browser.new_context(viewport={"width": 1280, "height": 800})
             page = ctx.new_page()
             page.goto(target_url, wait_until="networkidle")
-            n_steps = run_form_agent(
+            n_steps, completed, done_reason = run_form_agent(
                 page, profile,
                 on_step=_on_step,
                 pause_for_login=pause_login
@@ -132,10 +132,22 @@ if st.session_state.get("agent_run"):
                     pass
             browser.close()
         status_line.empty()
-        st.success(
-            f"Agent finished in {n_steps} steps. "
-            "Review what was filled before closing the browser."
-        )
+
+        if completed:
+            st.success(f"✓ Agent completed the form in {n_steps} steps.")
+            st.info(
+                done_reason or
+                "The form has been filled according to your profile. "
+                "Please review every field carefully in the browser, "
+                "then click Submit when you are ready to apply."
+            )
+        else:
+            st.warning(
+                f"Agent reached the step limit ({n_steps} steps) without finishing. "
+                "The form may be partially complete — please scroll through and check "
+                "every field before deciding whether to submit."
+            )
+
         with st.expander("Agent activity log"):
             for s in steps_log:
                 st.text(s)
