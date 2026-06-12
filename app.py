@@ -104,6 +104,8 @@ if agent_clicked:
         st.session_state.last_url    = url
         st.rerun()
 
+MAX_STEPS = 35
+
 # ── Agent execution ───────────────────────────────────────────────────────────
 if st.session_state.get("agent_run"):
     st.session_state.agent_run = False
@@ -112,12 +114,18 @@ if st.session_state.get("agent_run"):
     steps_log = []
 
     st.info("Agent is working — watch the browser window.")
-    status_line = st.empty()
-    status_line.caption("Starting…")
+    progress_bar = st.progress(0, text="Starting…")
+    status_line  = st.empty()
 
     def _on_step(n, desc):
         steps_log.append(f"Step {n}: {desc}")
-        status_line.caption(f"Step {n} — {desc}")
+        progress_bar.progress(
+            min(n / MAX_STEPS, 1.0),
+            text=f"Step {n} of up to {MAX_STEPS}"
+        )
+        # Show meaningful actions; skip internal screenshot messages
+        if "screenshot" not in desc.lower():
+            status_line.caption(f"↳ {desc}")
 
     try:
         with sync_playwright() as pw:
@@ -128,9 +136,10 @@ if st.session_state.get("agent_run"):
             ctx  = browser.new_context(viewport={"width": 1280, "height": 800})
             page = ctx.new_page()
             page.goto(target_url, wait_until="networkidle")
-            n_steps, completed, done_reason = run_form_agent(
+            n_steps, completed, done_reason, tok_in, tok_out = run_form_agent(
                 page, profile,
                 on_step=_on_step,
+                max_steps=MAX_STEPS,
                 pause_for_login=pause_login
             )
             if not page.is_closed():
@@ -139,21 +148,40 @@ if st.session_state.get("agent_run"):
                 except Exception:
                     pass
             browser.close()
+
+        progress_bar.progress(1.0, text="Complete")
         status_line.empty()
 
+        # ── Metrics row ───────────────────────────────────────────────────────
+        cost_usd = (tok_in * 5 + tok_out * 25) / 1_000_000
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Model",          "claude-opus-4-8")
+        m2.metric("Steps used",     f"{n_steps} / {MAX_STEPS}")
+        m3.metric("Tokens sent",    f"{tok_in:,}")
+        m4.metric("Estimated cost", f"~${cost_usd:.2f}")
+
+        st.divider()
+
+        # ── Completion message ────────────────────────────────────────────────
         if completed:
-            st.success(f"✓ Agent completed the form in {n_steps} steps.")
-            st.info(
-                done_reason or
-                "The form has been filled according to your profile. "
-                "Please review every field carefully in the browser, "
-                "then click Submit when you are ready to apply."
-            )
+            st.success(f"✓  Agent completed the form in {n_steps} steps.")
+            if done_reason:
+                with st.container(border=True):
+                    st.markdown("**The AI says:**")
+                    st.write(done_reason)
         else:
             st.warning(
-                f"Agent reached the step limit ({n_steps} steps) without finishing. "
-                "The form may be partially complete — please scroll through and check "
-                "every field before deciding whether to submit."
+                f"Agent reached the step limit ({n_steps} steps) without signalling done. "
+                "The form may be partially complete."
+            )
+
+        # ── Action prompt ─────────────────────────────────────────────────────
+        with st.container(border=True):
+            st.markdown("**What to do next**")
+            st.write(
+                "1. Scroll through the form in the browser window and check every field.\n"
+                "2. Complete any fields that were left blank.\n"
+                "3. When you are satisfied, click **Submit Application**."
             )
 
         with st.expander("Agent activity log"):

@@ -251,6 +251,8 @@ The select_option action sets the value directly and reliably without opening a 
     steps_taken = 0
     completed = False
     done_reason = ""
+    total_input_tokens = 0
+    total_output_tokens = 0
 
     for step in range(max_steps):
         if on_step:
@@ -290,6 +292,8 @@ The select_option action sets the value directly and reliably without opening a 
 
         # Add assistant reply to history so Claude remembers it next step
         messages.append({"role": "assistant", "content": response.content})
+        total_input_tokens  += response.usage.input_tokens
+        total_output_tokens += response.usage.output_tokens
 
         raw = response.content[0].text.strip()
 
@@ -325,4 +329,4 @@ The select_option action sets the value directly and reliably without opening a 
 
         page.wait_for_timeout(600)
 
-    return steps_taken, completed, done_reason
+    return steps_taken, completed, done_reason, total_input_tokens, total_output_tokens
