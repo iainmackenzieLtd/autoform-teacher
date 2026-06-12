@@ -104,6 +104,11 @@ st.caption(
     "⚠️ Agent mode sends browser screenshots to the Claude API. "
     "Use the mock profile when testing on unfamiliar sites."
 )
+st.info(
+    "💡 When you click **Launch Agent**, a browser window will open alongside this one. "
+    "You can watch the form being filled in real time — do not close it until the agent finishes.",
+    icon=None
+)
 
 if agent_clicked:
     if not url:
@@ -273,7 +278,8 @@ if st.session_state.get("agent_run"):
                     pass
             browser.close()
 
-        # Store result and rerun — the completion UI renders cleanly on the next pass
+        # Store result — rerun is called outside the try block so RerunException
+        # is not accidentally caught here
         st.session_state.agent_result = {
             "n_steps":     n_steps,
             "completed":   completed,
@@ -282,8 +288,11 @@ if st.session_state.get("agent_run"):
             "tok_out":     tok_out,
             "steps_log":   steps_log,
         }
-        st.rerun()
 
     except Exception as e:
         status_line.empty()
         st.error(f"Agent error: {e}")
+
+    else:
+        # Only rerun on success — outside the try block so RerunException propagates freely
+        st.rerun()
