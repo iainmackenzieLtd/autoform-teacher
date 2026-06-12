@@ -123,19 +123,23 @@ def run_form_agent(page, profile, on_step=None, max_steps=25, pause_for_login=Fa
     profile_text = _profile_summary(profile)
 
     system = f"""You are filling a job application form on behalf of an applicant.
-You will receive a screenshot of the browser and must return JSON actions to fill the form.
+You will receive screenshots of the browser and must return JSON actions to fill the form.
+You have full memory of this conversation — you can see all previous screenshots and actions.
 
 Applicant details:
 {profile_text}
 
 Rules:
-- Fill all visible form fields using the applicant's data
-- If you see section navigation buttons (e.g. "Personal Details", "Employment"), click them to open each section
+- Work through ALL sections of the form one at a time
+- Click a section button in the navigation to open it, fill its fields, then move to the next section
+- After filling a section, click "Save Section" or "Next Section" to advance
 - Click a field first, then type into it
+- Do NOT re-fill sections you have already completed in this conversation
+- Do NOT repeat an action you have already taken
 - Leave blank any field you have no data for — do not invent information
-- Do NOT click Submit, Apply, Send, or any button that would send the form
-- Scroll down to check for more fields below the visible area
-- When all sections are complete, return a done action
+- Do NOT click Submit, Apply, Send, or any button that would submit the form
+- Scroll down to check for fields below the visible area
+- When ALL sections are complete, return a done action
 
 Return ONLY a JSON array — no explanation, no markdown, just the array.
 
@@ -144,18 +148,9 @@ Available actions:
   {{"action": "type", "text": "<text to type>"}}
   {{"action": "scroll_down"}}
   {{"action": "key", "key": "<Tab|Enter|Escape>"}}
-  {{"action": "done", "reason": "<summary of what was filled>"}}
+  {{"action": "done", "reason": "<summary of what was filled>"}}"""
 
-Example response:
-[
-  {{"action": "click", "x": 180, "y": 420, "label": "Personal Details section button"}},
-  {{"action": "click", "x": 620, "y": 310, "label": "First Name field"}},
-  {{"action": "type", "text": "Alex"}},
-  {{"action": "click", "x": 900, "y": 310, "label": "Last Name field"}},
-  {{"action": "type", "text": "Morgan"}},
-  {{"action": "scroll_down"}}
-]"""
-
+    messages = []  # Full conversation history so Claude remembers previous steps
     steps_taken = 0
 
     for step in range(max_steps):
@@ -164,36 +159,42 @@ Example response:
 
         screenshot_data = _screenshot(page)
 
+        messages.append({
+            "role": "user",
+            "content": [
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/png",
+                        "data": screenshot_data
+                    }
+                },
+                {
+                    "type": "text",
+                    "text": (
+                        f"Step {step + 1}. This is the current state of the browser. "
+                        "Check what you have already done above, then return JSON actions "
+                        "for the next thing to fill. If all sections are complete, return "
+                        "[{\"action\": \"done\"}]."
+                    )
+                }
+            ]
+        })
+
         response = _client.messages.create(
             model="claude-opus-4-8",
             max_tokens=2048,
             system=system,
-            messages=[{
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": "image/png",
-                            "data": screenshot_data
-                        }
-                    },
-                    {
-                        "type": "text",
-                        "text": (
-                            f"Step {step + 1}. Look at this screenshot of the form. "
-                            "Return a JSON array of actions to fill any visible empty fields. "
-                            "If all visible sections are complete, return [{\"action\": \"done\"}]."
-                        )
-                    }
-                ]
-            }]
+            messages=messages
         )
+
+        # Add assistant reply to history so Claude remembers it next step
+        messages.append({"role": "assistant", "content": response.content})
 
         raw = response.content[0].text.strip()
 
-        # Extract JSON array from response (Claude may add explanation despite instructions)
+        # Extract JSON array from response
         match = re.search(r'\[.*\]', raw, re.DOTALL)
         if not match:
             if on_step:
