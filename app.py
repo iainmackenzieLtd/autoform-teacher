@@ -6,6 +6,7 @@ Run with: streamlit run app.py
 import sys
 import os
 import glob
+import json
 import streamlit as st
 from playwright.sync_api import sync_playwright
 
@@ -17,9 +18,16 @@ PROFILE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "profile"
 
 
 def discover_profiles():
-    """Return {display_name: file_path} for every JSON in the profile folder."""
+    """Return {display_name: file_path} for valid profile JSONs (must have 'personal' key)."""
     profiles = {}
     for path in sorted(glob.glob(os.path.join(PROFILE_DIR, "*.json"))):
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            if "personal" not in data:
+                continue  # skip files that aren't profiles (e.g. approval.json)
+        except Exception:
+            continue
         stem = os.path.splitext(os.path.basename(path))[0]
         display = stem.replace("_", " ").title()
         profiles[display] = path
