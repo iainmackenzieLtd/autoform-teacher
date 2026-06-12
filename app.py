@@ -127,12 +127,13 @@ with col_info:
 # "What to do next" box — always visible, dimmed while idle/running
 next_slot = st.empty()
 with next_slot.container(border=True):
-    st.markdown("<span style='color:#aaa'>**What to do next** — available once the agent finishes</span>",
-                unsafe_allow_html=True)
     st.markdown(
-        "<span style='color:#bbb'>1. Scroll through the form and check every field.<br>"
+        "<div style='opacity:0.35'>"
+        "<strong>What to do next</strong> — available once the agent finishes<br><br>"
+        "1. Scroll through the form and check every field.<br>"
         "2. Complete any fields left blank.<br>"
-        "3. When satisfied, click <b>Submit Application</b>.</span>",
+        "3. When satisfied, click <strong>Submit Application</strong>."
+        "</div>",
         unsafe_allow_html=True
     )
 
@@ -185,9 +186,15 @@ if st.session_state.get("agent_run"):
         state["tok_out"] = tok_out
         _redraw_panels(running=state["step"] == 0 or not state.get("done", False))
 
-    # Kick off with "running" state immediately
+    # Kick off — show Starting state before first step fires
     progress_bar.progress(0, text="Starting…")
-    _redraw_panels(running=True)
+    with step_slot.container(border=True):
+        st.metric("Step", "Starting…")
+    with info_slot.container(border=True):
+        st.caption("**Model**")
+        st.caption("claude-opus-4-8")
+        st.caption("**Tokens sent**  |  **Est. cost**")
+        st.caption("—  |  —")
 
     try:
         with sync_playwright() as pw:
