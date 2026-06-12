@@ -62,11 +62,15 @@ st.set_page_config(page_title="AutoForm", layout="wide")
 st.title("AutoForm")
 st.caption("Fill any job application form from your profile — automatically.")
 
-profile = load_profile()
+MOCK_PROFILE_PATH = "profile/mock_profile.json"
 
 # ── Sidebar: profile summary ─────────────────────────────────
 with st.sidebar:
     st.header("Your Profile")
+    use_mock = st.toggle("Use mock profile (for testing)", value=False)
+    profile = load_profile(MOCK_PROFILE_PATH if use_mock else PROFILE_PATH)
+    if use_mock:
+        st.caption("⚠️ Using fictional test profile — Alex Morgan")
     p = profile["personal"]
     st.markdown(f"### {p['full_name']}")
     st.write(p["email"])
@@ -275,27 +279,78 @@ if "mapped" in st.session_state:
         )
         st.caption(f"{approved_count} of {len(fillable)} fields approved for filling")
 
-        if st.button("Confirm and Fill", type="primary"):
-            approved_fields = [
-                f for f in fillable
-                if st.session_state.get(f"approve_{f['id']}", False)
-            ]
-            with st.spinner(f"Filling {len(approved_fields)} approved fields… close the browser when done."):
+        col_fill, col_agent = st.columns(2)
+
+        with col_fill:
+            if st.button("Confirm and Fill", type="primary", use_container_width=True):
+                approved_fields = [
+                    f for f in fillable
+                    if st.session_state.get(f"approve_{f['id']}", False)
+                ]
+                with st.spinner(f"Filling {len(approved_fields)} approved fields… close the browser when done."):
+                    try:
+                        with sync_playwright() as pw:
+                            browser = pw.chromium.launch(
+                                headless=False,
+                                args=["--window-size=1400,900"]
+                            )
+                            page = browser.new_page()
+                            page.goto(st.session_state.url, wait_until="networkidle")
+                            filled, not_found = fill_live(page, approved_fields)
+                            browser.close()
+                        blocked = len(fillable) - len(approved_fields)
+                        st.success(
+                            f"Done — {filled} fields filled · "
+                            f"{blocked} skipped by you · "
+                            f"{not_found} not found on page"
+                        )
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+
+        with col_agent:
+            if st.button("🤖 Fill with AI Agent", use_container_width=True):
+                st.session_state.agent_run = True
+                st.rerun()
+
+        if st.session_state.get("agent_run"):
+            st.session_state.agent_run = False
+            st.info(
+                "**AI Agent mode** — Claude sees screenshots of the browser and fills the form "
+                "visually, like a human would. Works on any form type.  \n"
+                "⚠️ **Privacy:** screenshots are sent to the Claude API during this process. "
+                "Use the mock profile when testing on unfamiliar forms."
+            )
+            steps_log = []
+
+            def _on_step(n, desc):
+                steps_log.append(f"Step {n}: {desc}")
+
+            with st.spinner("AI Agent is working — watch the browser window…"):
                 try:
+                    from agents.form_agent import run_form_agent
                     with sync_playwright() as pw:
                         browser = pw.chromium.launch(
                             headless=False,
-                            args=["--window-size=1400,900"]
+                            args=["--window-size=1280,800"]
                         )
-                        page = browser.new_page()
+                        ctx = browser.new_context(
+                            viewport={"width": 1280, "height": 800}
+                        )
+                        page = ctx.new_page()
                         page.goto(st.session_state.url, wait_until="networkidle")
-                        filled, not_found = fill_live(page, approved_fields)
+                        n_steps = run_form_agent(page, profile, on_step=_on_step)
+                        if not page.is_closed():
+                            try:
+                                page.wait_for_event("close", timeout=0)
+                            except Exception:
+                                pass
                         browser.close()
-                    blocked = len(fillable) - len(approved_fields)
                     st.success(
-                        f"Done — {filled} fields filled · "
-                        f"{blocked} skipped by you · "
-                        f"{not_found} not found on page"
+                        f"Agent finished in {n_steps} steps — "
+                        "review the form in the browser before closing it."
                     )
+                    with st.expander("Agent activity log"):
+                        for s in steps_log:
+                            st.text(s)
                 except Exception as e:
-                    st.error(f"Error: {e}")
+                    st.error(f"Agent error: {e}")

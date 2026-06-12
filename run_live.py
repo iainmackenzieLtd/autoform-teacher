@@ -17,8 +17,8 @@ URL = "https://www.firstclasssupply.co.uk/create-cv-secondary/"
 IGNORE_IDS = {"wt-cli-checkbox-necessary", "wt-cli-checkbox-analytics"}
 
 
-def load_profile():
-    with open(PROFILE_PATH) as f:
+def load_profile(path=PROFILE_PATH):
+    with open(path) as f:
         return json.load(f)
 
 

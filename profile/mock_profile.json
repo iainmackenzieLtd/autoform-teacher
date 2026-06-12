@@ -1,0 +1,86 @@
+{
+  "personal": {
+    "full_name": "Alex Morgan",
+    "email": "alex.morgan.test@example.com",
+    "phone_uk": "07700 900 142",
+    "phone_international": "+44 7700 900142",
+    "location_current": "Leeds, West Yorkshire",
+    "availability": "Available from September 2026"
+  },
+  "work_history": [
+    {
+      "employer": "Leeds City College",
+      "location": "Leeds, West Yorkshire",
+      "title": "Lecturer in Mathematics",
+      "start": "2019",
+      "end": null,
+      "responsibilities": [
+        "Deliver GCSE and A-level Mathematics to 16-19 students",
+        "Design schemes of work and assessment materials aligned to AQA specifications",
+        "Provide one-to-one support and intervention for underperforming students",
+        "Contribute to curriculum review and quality improvement processes"
+      ]
+    },
+    {
+      "employer": "Parkside Academy",
+      "location": "Bradford, West Yorkshire",
+      "title": "Mathematics Teacher",
+      "start": "2015",
+      "end": "2019",
+      "responsibilities": [
+        "Taught Mathematics to KS3 and KS4 students including top sets and intervention groups",
+        "Led the Year 10 numeracy catch-up programme",
+        "Mentored two NQTs during their induction year"
+      ]
+    },
+    {
+      "employer": "Hargreaves Engineering Ltd",
+      "location": "Sheffield, South Yorkshire",
+      "title": "Junior Design Engineer",
+      "start": "2012",
+      "end": "2014",
+      "responsibilities": [
+        "Produced technical drawings and calculations for structural components",
+        "Liaised with manufacturing team to ensure design specifications were met"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Leeds Beckett University",
+      "qualification": "PGCE",
+      "subject": "Mathematics (Secondary)",
+      "grade": "Pass",
+      "start": "2014",
+      "end": "2015"
+    },
+    {
+      "institution": "University of Sheffield",
+      "qualification": "BEng (Hons)",
+      "subject": "Mechanical Engineering",
+      "grade": "2:1",
+      "start": "2009",
+      "end": "2012"
+    }
+  ],
+  "cpd": [
+    {
+      "title": "Award in Education and Training (AET)",
+      "provider": "City & Guilds",
+      "date": "2019",
+      "description": "Level 3 qualification in further education teaching practice"
+    },
+    {
+      "title": "Numeracy for Life — Functional Skills Delivery",
+      "provider": "Education and Training Foundation",
+      "date": "2021",
+      "description": "Specialist training in delivering Functional Skills Mathematics at Levels 1 and 2"
+    },
+    {
+      "title": "Mental Health First Aid in Education",
+      "provider": "St John Ambulance",
+      "date": "2022",
+      "description": "Two-day certification in recognising and responding to mental health issues in learners"
+    }
+  ]
+}
