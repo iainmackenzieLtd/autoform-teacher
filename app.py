@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from run_live import load_profile
 from agents.form_agent import run_form_agent
 from agents.profile_reader import (
-    read_cv, empty_profile, empty_job, empty_education, empty_cpd, empty_referee
+    read_cv, docx_to_pdf, empty_profile, empty_job, empty_education, empty_cpd, empty_referee
 )
 
 PROFILE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "profile")
@@ -72,6 +72,24 @@ st.markdown("""
     background: rgba(255, 100, 80, 0.04) !important;
     padding: 1rem 1rem 0.5rem 1rem !important;
 }
+/* ── Tab labels — larger and bolder ────────────────────────────────────── */
+button[data-baseweb="tab"] p {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+}
+button[data-baseweb="tab"][aria-selected="true"] p {
+    font-weight: 700 !important;
+}
+/* ── Clear button — red, via adjacent-sibling of marker div ────────────── */
+[data-testid="stMarkdownContainer"]:has(#profile-clear-marker)
+  + [data-testid="stHorizontalBlock"] button {
+    background-color: #c0392b !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -93,10 +111,11 @@ st.markdown("""
   </p>
   <p style='font-size:0.95rem;margin:0;line-height:1.8;opacity:0.85'>
     <strong>How to use:</strong><br>
-    &nbsp;&nbsp;① &nbsp;Paste the URL of the application form into the box below<br>
-    &nbsp;&nbsp;② &nbsp;Click <strong>Launch Agent</strong> — the form fills automatically<br>
-    &nbsp;&nbsp;③ &nbsp;A browser window opens with the completed form — review every field<br>
-    &nbsp;&nbsp;④ &nbsp;Write any supporting statements, then click <strong>Submit Application</strong>
+    &nbsp;&nbsp;① &nbsp;Go to <strong>My Profile</strong> — upload your CV or fill in your details<br>
+    &nbsp;&nbsp;② &nbsp;Paste the URL of the application form into the box below<br>
+    &nbsp;&nbsp;③ &nbsp;Click <strong>Launch Agent</strong> — the form fills automatically<br>
+    &nbsp;&nbsp;④ &nbsp;A browser window opens with the completed form — review every field<br>
+    &nbsp;&nbsp;⑤ &nbsp;Write any supporting statements, then click <strong>Submit Application</strong>
   </p>
 </div>
 """, unsafe_allow_html=True)
@@ -136,6 +155,24 @@ with st.sidebar:
         st.markdown(f"**{edu['qualification']} {edu['subject']}**")
         st.caption(edu["institution"])
 
+def _match_opt(raw: str, options: list) -> str:
+    """Map a raw extracted value to the nearest dropdown option, or '' if none fits."""
+    raw = (raw or "").strip()
+    if not raw:
+        return ""
+    if raw in options:
+        return raw
+    raw_lower = raw.lower()
+    for opt in options:
+        if opt.lower() == raw_lower:
+            return opt
+    # e.g. "Yes (awarded 2010)" → "Yes"
+    for opt in options:
+        if opt and raw_lower.startswith(opt.lower()):
+            return opt
+    return ""
+
+
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 tab_form, tab_profile = st.tabs(["🤖  Fill a Form", "👤  My Profile"])
 
@@ -156,11 +193,16 @@ with tab_profile:
 
     _d = st.session_state.profile_draft
 
+    if st.session_state.pop("profile_just_saved", False):
+        st.success("✅ Profile saved — switch to the Fill a Form tab to use it.")
+
+    st.markdown('<div id="profile-clear-marker"></div>', unsafe_allow_html=True)
     col_hdr, col_clear = st.columns([5, 1])
     with col_hdr:
         st.subheader("My Profile")
     with col_clear:
-        if st.button("🗑 Clear", help="Remove all saved data and start fresh"):
+        if st.button("🗑 Clear", help="Remove all saved data and start fresh",
+                     use_container_width=True):
             st.session_state.profile_draft = empty_profile()
             if os.path.exists(_prof_path):
                 os.remove(_prof_path)
@@ -174,11 +216,19 @@ with tab_profile:
     # ── CV Upload ──────────────────────────────────────────────────────────────
     with st.container(border=True):
         st.markdown("**Extract from CV**")
-        _cv_file = st.file_uploader("Upload your CV (PDF)", type=["pdf"],
+        st.caption(
+            "Your CV is sent to Claude to extract the fields below — it is not stored anywhere "
+            "by AutoForm. Once extracted, only the text fields on this page are saved locally "
+            "on your device. Use the **🗑 Clear** button above to remove all saved data."
+        )
+        _cv_file = st.file_uploader("Upload your CV (PDF or Word .docx)", type=["pdf", "docx"],
                                      label_visibility="collapsed")
         if st.button("📄 Extract from CV", disabled=_cv_file is None):
             with st.spinner("Reading your CV…"):
-                _extracted = read_cv(_cv_file.read())
+                _cv_bytes = _cv_file.read()
+                if _cv_file.name.lower().endswith(".docx"):
+                    _cv_bytes = docx_to_pdf(_cv_bytes)
+                _extracted = read_cv(_cv_bytes)
             if _extracted:
                 # Merge: extracted data fills empty fields; existing data is kept
                 _p = _extracted.get("personal", {})
@@ -204,8 +254,9 @@ with tab_profile:
         _p = _d["personal"]
         col1, col2 = st.columns(2)
         with col1:
-            _p["title"]     = st.selectbox("Title", ["", "Mr", "Mrs", "Ms", "Miss", "Dr", "Prof"],
-                                            index=["","Mr","Mrs","Ms","Miss","Dr","Prof"].index(_p.get("title","") or ""))
+            _TITLES = ["", "Mr", "Mrs", "Ms", "Miss", "Dr", "Prof"]
+            _p["title"] = st.selectbox("Title", _TITLES,
+                                       index=_TITLES.index(_match_opt(_p.get("title",""), _TITLES)))
             _p["full_name"] = st.text_input("Full name", _p.get("full_name",""))
             _p["email"]     = st.text_input("Email", _p.get("email",""))
             _p["phone_uk"]  = st.text_input("Phone", _p.get("phone_uk",""))
@@ -218,13 +269,14 @@ with tab_profile:
             _p["county"]     = st.text_input("County", _p.get("county",""))
             _p["postcode"]   = st.text_input("Postcode", _p.get("postcode",""))
             _p["nationality"]= st.text_input("Nationality", _p.get("nationality",""))
-        _p["right_to_work"]          = st.selectbox("Right to work in the UK",
-                                                     ["", "Yes", "No"],
-                                                     index=["","Yes","No"].index(_p.get("right_to_work","") or ""))
+        _RTW_OPTS = ["", "Yes", "No"]
+        _p["right_to_work"] = st.selectbox("Right to work in the UK", _RTW_OPTS,
+                                            index=_RTW_OPTS.index(_match_opt(_p.get("right_to_work",""), _RTW_OPTS)))
         _p["dbs_status"]             = st.text_input("DBS status", _p.get("dbs_status",""))
         _p["teacher_reference_number"]= st.text_input("Teacher Reference Number (TRN)", _p.get("teacher_reference_number",""))
-        _p["qts"]                    = st.selectbox("QTS", ["", "Yes", "No", "In progress"],
-                                                     index=["","Yes","No","In progress"].index(_p.get("qts","") or ""))
+        _QTS_OPTS = ["", "Yes", "No", "In progress"]
+        _p["qts"] = st.selectbox("QTS", _QTS_OPTS,
+                                  index=_QTS_OPTS.index(_match_opt(_p.get("qts",""), _QTS_OPTS)))
         _p["availability"]           = st.text_input("Availability / notice period", _p.get("availability",""))
         _d["personal"] = _p
 
@@ -320,12 +372,12 @@ with tab_profile:
     # ── Employment Preferences ────────────────────────────────────────────────
     with st.expander("Employment Preferences"):
         _prefs = _d.get("employment_preferences", {})
-        _prefs["employment_type"]  = st.selectbox("Employment type",
-                                                   ["", "Full-time", "Part-time", "Supply", "Any"],
-                                                   index=["","Full-time","Part-time","Supply","Any"].index(_prefs.get("employment_type","") or ""))
-        _prefs["contract_type"]    = st.selectbox("Contract type",
-                                                   ["", "Permanent", "Fixed-term", "Supply", "Any"],
-                                                   index=["","Permanent","Fixed-term","Supply","Any"].index(_prefs.get("contract_type","") or ""))
+        _EMP_OPTS = ["", "Full-time", "Part-time", "Supply", "Any"]
+        _prefs["employment_type"] = st.selectbox("Employment type", _EMP_OPTS,
+                                                  index=_EMP_OPTS.index(_match_opt(_prefs.get("employment_type",""), _EMP_OPTS)))
+        _CON_OPTS = ["", "Permanent", "Fixed-term", "Supply", "Any"]
+        _prefs["contract_type"] = st.selectbox("Contract type", _CON_OPTS,
+                                                index=_CON_OPTS.index(_match_opt(_prefs.get("contract_type",""), _CON_OPTS)))
         _prefs["preferred_start"]  = st.text_input("Preferred start", _prefs.get("preferred_start",""))
         _d["employment_preferences"] = _prefs
 
@@ -335,7 +387,7 @@ with tab_profile:
         os.makedirs(PROFILE_DIR, exist_ok=True)
         with open(_prof_path, "w") as _f:
             json.dump(_d, _f, indent=2)
-        st.success("Profile saved. Switch to the Fill a Form tab to use it.")
+        st.session_state.profile_just_saved = True
         st.rerun()
 
 with tab_form:
