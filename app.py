@@ -67,7 +67,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("AutoForm")
-st.caption("Fill any job application form from your profile — automatically.")
+st.caption(
+    "Fills the repetitive fields of any teaching job application from your profile — "
+    "personal details, employment history, qualifications, and referees. "
+    "Supporting statements and open-ended questions are left for you to write."
+)
 
 if TEST_MODE:
     st.warning(
@@ -175,8 +179,8 @@ if result:
     with next_slot.container(border=True):
         st.subheader("✓ What to do next")
         st.write(
-            "1. Review the screenshot above and check every field.\n"
-            f"2. Open the form in your browser to complete any fields left blank: {result.get('url','')}\n"
+            "1. Check the field report below — any ⚠ fields need your input.\n"
+            f"2. Open the form in your browser and complete those fields: {result.get('url','')}\n"
             "3. When you are satisfied, click **Submit Application**."
         )
 
@@ -228,8 +232,8 @@ else:
             "<div style='opacity:0.35'>"
             "<span style='font-size:1.25rem;font-weight:600'>What to do next</span>"
             " — available once the agent finishes<br><br>"
-            "1. Review the screenshot of the completed form.<br>"
-            "2. Open the form URL in your browser to check any fields left blank.<br>"
+            "1. Check the field report — any ⚠ fields need your input.<br>"
+            "2. Open the form URL in your browser and complete those fields.<br>"
             "3. When satisfied, click <strong>Submit Application</strong>."
             "</div>",
             unsafe_allow_html=True
@@ -272,8 +276,8 @@ if st.session_state.get("agent_run"):
             with next_slot.container(border=True):
                 st.subheader("✓ What to do next")
                 st.write(
-                    "1. Review the screenshot above and check every field.\n"
-                    f"2. Open the form in your browser to complete any fields left blank: {target_url}\n"
+                    "1. Check the field report below — any ⚠ fields need your input.\n"
+                    f"2. Open the form in your browser and complete those fields: {target_url}\n"
                     "3. When you are satisfied, click **Submit Application**."
                 )
             done_reason_live = desc[5:].lstrip("—").strip()

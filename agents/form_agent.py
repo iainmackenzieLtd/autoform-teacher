@@ -237,16 +237,25 @@ Field matching rules — pay close attention to labels:
 - "Duties" or "Responsibilities" → description of the role
 - "Date" as a standalone field near a signature → today's date in DD/MM/YYYY format
 - "Referee" fields → use the referees from the profile
-- "Supporting statement" → use the supporting statement from the profile
+- "Supporting statement" → skip — this requires original writing by the applicant (see below)
 
-Word-limited textareas:
-If you see a counter like "47 / 300 words" beneath a textarea, that textarea has a word limit.
-- Write enough to meet the minimum (shown as "Minimum N words" nearby).
-- Do not exceed the maximum word count shown in the counter.
-- For open-ended questions (teaching philosophy, lesson descriptions, why this school, CPD, etc.),
-  compose a relevant response using the profile data — work history, CPD entries, and supporting
-  statement. Each question needs a tailored answer; do not paste the same text into every box.
-- After typing, check the counter in the screenshot to confirm you are within limits before moving on.
+Long-text / open-ended fields — SKIP these, do not attempt to fill them:
+Fields that ask for original, personal, or reflective writing must be left blank.
+This includes (but is not limited to):
+- Supporting statement / personal statement
+- "Why do you want to work at this school?"
+- "Describe your teaching philosophy"
+- "What would you bring to this role?"
+- "Describe a recent lesson / achievement / challenge"
+- Any textarea asking for a written essay, reflection, or personal response
+
+For each skipped field, add it to fields_skipped with reason "requires applicant's original writing".
+Do NOT compose or generate text for these fields — leave them blank.
+The applicant will write these themselves after the agent has completed all other fields.
+
+Short factual textareas are fine to fill — these include:
+- "Main duties and responsibilities" → use job duties from work history (factual summary only)
+- "Reason for leaving" → use a brief factual reason if available in the profile
 
 For dropdowns: click the dropdown and select the closest matching option.
 For radio buttons: click the correct option.
