@@ -52,4 +52,26 @@ This requires a Claude API call to interpret the field in context. It's the diff
 
 **The principle:** Don't trust an agent to remember the rules. Make the rules structural so they cannot be bypassed even if the agent drifts.
 
+---
+
+## Per-user configuration agent — "I need my app to…"
+
+**The idea:** When AutoForm is shipped to a new user, the first step is not the form filler — it is a configuration agent. The user tells it what they need:
+
+> "I need my app to always skip the diversity monitoring section."
+> "I want it to default to supply work, not permanent."
+> "Don't fill in the safeguarding declaration — I always check that myself."
+
+The agent responds, asks any clarifying questions, and adjusts the app's configuration accordingly — without the user ever touching a settings file.
+
+**Why this matters:** Every teacher applicant is different. A NQT and a deputy head have different risk tolerances, different preferences, different gaps in their profile. A fixed configuration shipped to everyone is a compromise. A configuration agent means each user gets a version that behaves the way *they* need it to.
+
+**How it might work:**
+- A one-time onboarding conversation before first use
+- The agent writes to a user-specific config file (e.g. `profile/preferences.json`) that the form filler reads
+- Can be re-run at any time: "I want to change how it handles references"
+- The agent explains what it is about to change before saving — same transparency principle as the profile onboarding
+
+**This is a significant level-up** — noted here as a direction, not an immediate task. The profile Q&A agent (already in the roadmap) is the natural predecessor.
+
 This distinction — instruction vs code — is one of the most important concepts in building trustworthy AI systems.

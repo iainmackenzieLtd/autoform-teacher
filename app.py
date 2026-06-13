@@ -110,8 +110,9 @@ with st.sidebar:
 
 # ── URL input ─────────────────────────────────────────────────────────────────
 st.subheader("Enter the form URL")
+_last_url = st.session_state.get("agent_url", "")
 with st.form("agent_form"):
-    url = st.text_input("URL", label_visibility="collapsed",
+    url = st.text_input("URL", value=_last_url, label_visibility="collapsed",
                         placeholder="https://...  or  file:///home/...")
     agent_clicked = st.form_submit_button("🤖 Launch Agent", type="primary")
 
@@ -180,9 +181,9 @@ if result:
         st.subheader("✓ What to do next")
         form_url = result.get('url', '')
         st.markdown(
-            "1. Check the field report below — any ⚠ fields need your input.  \n"
-            f"2. Open the form and complete those fields: [{form_url}]({form_url})  \n"
-            "3. When you are satisfied, click **Submit Application**."
+            "Complete any ⚠ writing fields in the browser window, then click **Submit Application**.  \n"
+            f"<small>If you closed the window: [{form_url}]({form_url})</small>",
+            unsafe_allow_html=True
         )
 
     with completion_slot.container():
@@ -232,10 +233,7 @@ else:
         st.markdown(
             "<div style='opacity:0.35'>"
             "<span style='font-size:1.25rem;font-weight:600'>What to do next</span>"
-            " — available once the agent finishes<br><br>"
-            "1. Check the field report — any ⚠ fields need your input.<br>"
-            "2. Open the form URL in your browser and complete those fields.<br>"
-            "3. When satisfied, click <strong>Submit Application</strong>."
+            " — the review window will open automatically when the agent finishes."
             "</div>",
             unsafe_allow_html=True
         )
@@ -277,9 +275,9 @@ if st.session_state.get("agent_run"):
             with next_slot.container(border=True):
                 st.subheader("✓ What to do next")
                 st.markdown(
-                    "1. Check the field report below — any ⚠ fields need your input.  \n"
-                    f"2. Open the form and complete those fields: [{target_url}]({target_url})  \n"
-                    "3. When you are satisfied, click **Submit Application**."
+                    "Complete any ⚠ writing fields in the browser window, then click **Submit Application**.  \n"
+                    f"<small>If you closed the window: [{target_url}]({target_url})</small>",
+                    unsafe_allow_html=True
                 )
             done_reason_live = desc[5:].lstrip("—").strip()
             with completion_slot.container():
