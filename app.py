@@ -498,6 +498,15 @@ else:
 
         with completion_slot.container():
             st.divider()
+            if result.get("filled_html"):
+                st.download_button(
+                    "📥 Download filled form",
+                    data=result["filled_html"].encode("utf-8") if isinstance(result["filled_html"], str) else result["filled_html"],
+                    file_name="filled_form.html",
+                    mime="text/html",
+                    help="Open this file in your browser — all fields will be pre-filled. Complete the writing sections, then click Submit.",
+                    use_container_width=True,
+                )
             if not result["completed"]:
                 st.warning(
                     f"Agent reached the step limit ({result['n_steps']} steps) without "
@@ -608,6 +617,7 @@ if st.session_state.get("agent_run"):
 
     _agent_done  = False
     _agent_error = None
+    _filled_html = None
 
     try:
         with sync_playwright() as pw:
@@ -638,6 +648,28 @@ if st.session_state.get("agent_run"):
                 });
                 return out;
             }""")
+            # ── Capture filled HTML for download ──────────────────────────
+            _raw_html = page.content()
+            _fill_script = (
+                "<script>(function(){const vals="
+                + json.dumps(field_values)
+                + """;function fill(){Object.entries(vals).forEach(([k,v])=>{
+let el=document.getElementById(k)||document.querySelector('[name="'+k+'"]');
+if(!el)return;
+if(el.tagName==='SELECT'){el.value=v;el.dispatchEvent(new Event('change',{bubbles:true}));}
+else if(el.type==='radio'){const r=document.querySelector('input[name="'+el.name+'"][value="'+v+'"]');
+if(r){r.checked=true;r.dispatchEvent(new Event('change',{bubbles:true}));}}
+else if(el.type==='checkbox'){el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}));}
+else{el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));
+el.dispatchEvent(new Event('change',{bubbles:true}));}});}
+document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fill):fill();
+})();</script>"""
+            )
+            _filled_html = (
+                _raw_html.replace("</body>", _fill_script + "</body>")
+                if "</body>" in _raw_html
+                else _raw_html + _fill_script
+            )
             browser.close()
 
             # ── Phase 2: visible review window ────────────────────────────
@@ -733,6 +765,7 @@ if st.session_state.get("agent_run"):
             "fields_skipped":   fields_skipped,
             "final_screenshot": state["last_screenshot"],
             "url":              target_url,
+            "filled_html":      _filled_html,
         }
         _agent_done = True
 
