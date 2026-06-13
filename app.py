@@ -181,8 +181,11 @@ if result:
         st.subheader("✓ What to do next")
         form_url = result.get('url', '')
         st.markdown(
-            "Complete any ⚠ writing fields in the browser window, then click **Submit Application**.  \n"
-            f"<small>If you closed the window: [{form_url}]({form_url})</small>",
+            "<p style='font-size:1.25rem;margin:0.25rem 0 0.5rem 0'>"
+            "Please complete any gaps, supporting statements, and open-ended questions — "
+            "then click <strong>Submit Application</strong>."
+            "</p>"
+            f"<small>If you closed the browser window: <a href='{form_url}'>{form_url}</a></small>",
             unsafe_allow_html=True
         )
 
@@ -275,8 +278,11 @@ if st.session_state.get("agent_run"):
             with next_slot.container(border=True):
                 st.subheader("✓ What to do next")
                 st.markdown(
-                    "Complete any ⚠ writing fields in the browser window, then click **Submit Application**.  \n"
-                    f"<small>If you closed the window: [{target_url}]({target_url})</small>",
+                    "<p style='font-size:1.25rem;margin:0.25rem 0 0.5rem 0'>"
+                    "Please complete any gaps, supporting statements, and open-ended questions — "
+                    "then click <strong>Submit Application</strong>."
+                    "</p>"
+                    f"<small>If you closed the browser window: <a href='{target_url}'>{target_url}</a></small>",
                     unsafe_allow_html=True
                 )
             done_reason_live = desc[5:].lstrip("—").strip()
