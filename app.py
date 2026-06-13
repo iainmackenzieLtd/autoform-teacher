@@ -110,10 +110,10 @@ with st.sidebar:
 
 # ── URL input ─────────────────────────────────────────────────────────────────
 st.subheader("Enter the form URL")
-url = st.text_input("URL", label_visibility="collapsed",
-                    placeholder="https://...  or  file:///home/...")
-
-agent_clicked = st.button("🤖 Launch Agent", type="primary")
+with st.form("agent_form"):
+    url = st.text_input("URL", label_visibility="collapsed",
+                        placeholder="https://...  or  file:///home/...")
+    agent_clicked = st.form_submit_button("🤖 Launch Agent", type="primary")
 
 st.caption(
     "⚠️ Agent mode sends browser screenshots to the Claude API. "
@@ -178,9 +178,10 @@ if result:
 
     with next_slot.container(border=True):
         st.subheader("✓ What to do next")
-        st.write(
-            "1. Check the field report below — any ⚠ fields need your input.\n"
-            f"2. Open the form in your browser and complete those fields: {result.get('url','')}\n"
+        form_url = result.get('url', '')
+        st.markdown(
+            "1. Check the field report below — any ⚠ fields need your input.  \n"
+            f"2. Open the form and complete those fields: [{form_url}]({form_url})  \n"
             "3. When you are satisfied, click **Submit Application**."
         )
 
@@ -275,9 +276,9 @@ if st.session_state.get("agent_run"):
             _redraw_panels(running=False)
             with next_slot.container(border=True):
                 st.subheader("✓ What to do next")
-                st.write(
-                    "1. Check the field report below — any ⚠ fields need your input.\n"
-                    f"2. Open the form in your browser and complete those fields: {target_url}\n"
+                st.markdown(
+                    "1. Check the field report below — any ⚠ fields need your input.  \n"
+                    f"2. Open the form and complete those fields: [{target_url}]({target_url})  \n"
                     "3. When you are satisfied, click **Submit Application**."
                 )
             done_reason_live = desc[5:].lstrip("—").strip()
@@ -350,7 +351,7 @@ if st.session_state.get("agent_run"):
             browser.close()
 
             # ── Phase 2: visible review window ────────────────────────────
-            if completed and field_values:
+            if completed:
                 status_line.caption(
                     "✓ Agent finished — a browser window will open with the completed form. "
                     "Review every field, then click Submit. Close the window when done."
@@ -389,12 +390,17 @@ if st.session_state.get("agent_run"):
                     });
                 }""", field_values)
 
-                # Wait for user to close the window
+                # Wait for user to review and close the window
+                status_line.caption(
+                    "⏳ Waiting for you to close the review window — "
+                    "review every field, then click Submit Application and close the tab."
+                )
                 try:
                     vis_page.wait_for_event("close", timeout=0)
                 except Exception:
                     pass
                 vis_browser.close()
+                status_line.caption("✓ Review window closed.")
 
         st.session_state.agent_result = {
             "n_steps":          n_steps,
