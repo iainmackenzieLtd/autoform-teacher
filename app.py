@@ -174,7 +174,7 @@ def _match_opt(raw: str, options: list) -> str:
 
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_form, tab_profile = st.tabs(["🤖  Fill a Form", "👤  My Profile"])
+tab_profile, tab_form = st.tabs(["👤  My Profile", "🤖  Fill a Form"])
 
 with tab_profile:
     _prof_path = os.path.join(PROFILE_DIR, "user_profile.json")
