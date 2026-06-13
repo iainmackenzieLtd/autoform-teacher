@@ -156,7 +156,16 @@ with tab_profile:
 
     _d = st.session_state.profile_draft
 
-    st.subheader("My Profile")
+    col_hdr, col_clear = st.columns([5, 1])
+    with col_hdr:
+        st.subheader("My Profile")
+    with col_clear:
+        if st.button("🗑 Clear", help="Remove all saved data and start fresh"):
+            st.session_state.profile_draft = empty_profile()
+            if os.path.exists(_prof_path):
+                os.remove(_prof_path)
+            st.rerun()
+
     st.markdown(
         "Build your profile once — AutoForm uses it to fill every application. "
         "Upload your CV to extract details automatically, then check, edit, and add anything missing."
