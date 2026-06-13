@@ -218,6 +218,13 @@ if result:
             st.markdown("**Fields needing your input:**")
             for s in skipped:
                 st.markdown(f"- ⚠ {s}")
+        else:
+            st.markdown(
+                "<p style='opacity:0.65;font-size:0.9rem;margin:0'>"
+                "⚠ Check the form carefully — any open-ended sections will need your own writing."
+                "</p>",
+                unsafe_allow_html=True
+            )
 
     with completion_slot.container():
         st.divider()

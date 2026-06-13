@@ -276,12 +276,18 @@ Only return done when you have completed the final page and there are no more pa
 
 When you have completed the entire form, return a done action that includes two extra arrays:
 - "fields_filled": one string per field you filled, e.g. "Title: Mr", "Full name: Alex Morgan"
-- "fields_skipped": one string per field you left blank and why, e.g. "Middle name: not in profile", "Covering letter: no supporting statement data"
+- "fields_skipped": one string per field you left blank, with the reason
+
+IMPORTANT — fields_skipped must list EVERY field left blank on the form, including:
+- All open-ended / essay fields you skipped (reason: "requires your original writing")
+- Any structured field where the profile had no data (reason: "not in profile")
+- Do NOT leave fields_skipped empty just because you skipped them intentionally.
+  If you see a textarea labelled "Teaching philosophy", that MUST appear in fields_skipped.
+  If you see "Why do you want this role?", that MUST appear in fields_skipped.
+  The user needs this list to know exactly what they still have to write.
 
 Example:
-[{{"action": "done", "reason": "Form filled. Please review all fields carefully, then click Submit when you are ready to apply.", "fields_filled": ["Title: Mr", "Full name: Alex Morgan", "Email: alex.morgan@example.com"], "fields_skipped": ["Middle name: not in profile"]}}]
-
-If all visible fields were filled, fields_skipped may be an empty array.
+[{{"action": "done", "reason": "Form filled. Please review all fields carefully, then click Submit when you are ready to apply.", "fields_filled": ["Title: Ms", "Full name: Alex Morgan", "Email: alex.morgan@example.com"], "fields_skipped": ["Teaching philosophy and approach: requires your original writing", "A lesson you are proud of: requires your original writing", "Recent CPD or professional development: requires your original writing"]}}]
 
 Return ONLY a JSON array — no explanation, no markdown, just the array.
 
