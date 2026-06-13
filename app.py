@@ -73,11 +73,30 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("AutoForm")
-st.caption(
-    "Fills the repetitive fields of any teaching job application from your profile — "
-    "personal details, employment history, qualifications, and referees. "
-    "Supporting statements and open-ended questions are left for you to write."
-)
+
+st.markdown("""
+<div style='border-left:4px solid rgba(255,100,80,0.7);
+            background:rgba(255,100,80,0.06);
+            padding:1.1rem 1.4rem 1rem 1.4rem;
+            border-radius:0 0.5rem 0.5rem 0;
+            margin-bottom:0.75rem'>
+  <p style='font-size:1.2rem;font-weight:600;margin:0 0 0.6rem 0;line-height:1.4'>
+    Save time on every teaching job application.
+  </p>
+  <p style='font-size:1rem;margin:0 0 1rem 0;line-height:1.6;opacity:0.9'>
+    AutoForm fills in the repetitive fields — personal details, employment history,
+    qualifications, and referees — directly from your profile.
+    Supporting statements and open-ended questions are left for you to write.
+  </p>
+  <p style='font-size:0.95rem;margin:0;line-height:1.8;opacity:0.85'>
+    <strong>How to use:</strong><br>
+    &nbsp;&nbsp;① &nbsp;Paste the URL of the application form into the box below<br>
+    &nbsp;&nbsp;② &nbsp;Click <strong>Launch Agent</strong> — the form fills automatically<br>
+    &nbsp;&nbsp;③ &nbsp;A browser window opens with the completed form — review every field<br>
+    &nbsp;&nbsp;④ &nbsp;Write any supporting statements, then click <strong>Submit Application</strong>
+  </p>
+</div>
+""", unsafe_allow_html=True)
 
 if TEST_MODE:
     st.warning(
@@ -183,44 +202,35 @@ if result:
                 use_container_width=True,
             )
 
+    filled  = result.get("fields_filled", [])
+    skipped = result.get("fields_skipped", [])
+
     with next_slot.container(border=True):
         st.subheader("✓ What to do next")
-        form_url = result.get('url', '')
         st.markdown(
-            "<p style='font-size:1.25rem;margin:0.25rem 0 0.5rem 0'>"
+            "<p style='font-size:1.25rem;margin:0.25rem 0 0.75rem 0'>"
             "Please complete any gaps, supporting statements, and open-ended questions — "
             "then click <strong>Submit Application</strong>."
             "</p>",
             unsafe_allow_html=True
         )
+        if skipped:
+            st.markdown("**Fields needing your input:**")
+            for s in skipped:
+                st.markdown(f"- ⚠ {s}")
 
     with completion_slot.container():
         st.divider()
-        if result["completed"]:
-            st.success(f"✓  Agent completed the form in {result['n_steps']} steps.")
-            if result["done_reason"]:
-                with st.container(border=True):
-                    st.markdown("**The AI says:**")
-                    st.write(result["done_reason"])
-        else:
+        if not result["completed"]:
             st.warning(
                 f"Agent reached the step limit ({result['n_steps']} steps) without "
                 "signalling done. The form may be partially complete."
             )
 
-        # Field report
-        filled  = result.get("fields_filled", [])
-        skipped = result.get("fields_skipped", [])
-        if filled or skipped:
-            with st.expander(f"Field report — {len(filled)} filled, {len(skipped)} skipped"):
-                if filled:
-                    st.markdown("**Filled**")
-                    for f in filled:
-                        st.markdown(f"- ✓ {f}")
-                if skipped:
-                    st.markdown("**Left blank / skipped**")
-                    for s in skipped:
-                        st.markdown(f"- ⚠ {s}")
+        if filled:
+            with st.expander(f"✓ {len(filled)} fields filled by the agent"):
+                for f in filled:
+                    st.markdown(f"- ✓ {f}")
 
         with st.expander("Agent activity log"):
             for s in result["steps_log"]:
@@ -288,20 +298,15 @@ if st.session_state.get("agent_run"):
             with next_slot.container(border=True):
                 st.subheader("✓ What to do next")
                 st.markdown(
-                    "<p style='font-size:1.25rem;margin:0.25rem 0 0.5rem 0'>"
+                    "<p style='font-size:1.25rem;margin:0.25rem 0 0.75rem 0'>"
                     "Please complete any gaps, supporting statements, and open-ended questions — "
                     "then click <strong>Submit Application</strong>."
+                    "</p>"
+                    "<p style='font-size:0.9rem;opacity:0.6;margin:0'>"
+                    "Field report will appear here once you close the review window."
                     "</p>",
                     unsafe_allow_html=True
                 )
-            done_reason_live = desc[5:].lstrip("—").strip()
-            with completion_slot.container():
-                st.divider()
-                st.success(f"✓  Agent completed the form in {n} steps.")
-                if done_reason_live:
-                    with st.container(border=True):
-                        st.markdown("**The AI says:**")
-                        st.write(done_reason_live)
         elif "screenshot" not in desc.lower():
             status_line.caption(f"↳ {desc}")
             _redraw_panels(running=True)
