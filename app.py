@@ -441,8 +441,7 @@ if st.session_state.get("agent_run"):
 
                 # Wait for user to review and close the window
                 status_line.caption(
-                    "⏳ Waiting for you to close the review window — "
-                    "review every field, then click Submit Application and close the tab."
+                    "⏳ Browser window open — complete your writing sections, submit, then close the window."
                 )
                 try:
                     vis_page.wait_for_event("close", timeout=0)
