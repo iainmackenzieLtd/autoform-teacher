@@ -14,6 +14,9 @@ from playwright.sync_api import sync_playwright
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from run_live import load_profile
 from agents.form_agent import run_form_agent
+from agents.profile_reader import (
+    read_cv, empty_profile, empty_job, empty_education, empty_cpd, empty_referee
+)
 
 PROFILE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "profile")
 MAX_STEPS   = 30
@@ -133,141 +136,327 @@ with st.sidebar:
         st.markdown(f"**{edu['qualification']} {edu['subject']}**")
         st.caption(edu["institution"])
 
-# ── URL input ─────────────────────────────────────────────────────────────────
-st.subheader("Enter the form URL")
-_last_url = st.session_state.get("agent_url", "")
-with st.form("agent_form"):
-    url = st.text_input("URL", value=_last_url, label_visibility="collapsed",
-                        placeholder="https://...  or  file:///home/...")
-    agent_clicked = st.form_submit_button("🤖 Launch Agent", type="primary")
+# ── Tabs ──────────────────────────────────────────────────────────────────────
+tab_form, tab_profile = st.tabs(["🤖  Fill a Form", "👤  My Profile"])
 
-st.caption(
-    "⚠️ Agent mode sends browser screenshots to the Claude API. "
-    "Use the mock profile when testing on unfamiliar sites."
-)
+with tab_profile:
+    _prof_path = os.path.join(PROFILE_DIR, "user_profile.json")
 
-if agent_clicked:
-    if not url:
-        st.error("Enter a URL first.")
-    elif TEST_MODE and not _url_allowed(url):
-        st.error(
-            f"⛔ Test mode: only approved synthetic test URLs are allowed. "
-            f"Approved domains: {', '.join(ALLOWED_DOMAINS)}"
-        )
-    else:
-        st.session_state.agent_run = True
-        st.session_state.agent_url = url
-        st.session_state.pop("agent_result", None)
+    # ── Initialise draft in session state ─────────────────────────────────────
+    if "profile_draft" not in st.session_state:
+        base = empty_profile()
+        if os.path.exists(_prof_path):
+            with open(_prof_path) as _f:
+                loaded = json.load(_f)
+            # Merge loaded data into base schema so all keys always exist
+            for k, v in loaded.items():
+                if k in base:
+                    base[k] = v
+        st.session_state.profile_draft = base
+
+    _d = st.session_state.profile_draft
+
+    st.subheader("My Profile")
+    st.markdown(
+        "Build your profile once — AutoForm uses it to fill every application. "
+        "Upload your CV to extract details automatically, then check, edit, and add anything missing."
+    )
+
+    # ── CV Upload ──────────────────────────────────────────────────────────────
+    with st.container(border=True):
+        st.markdown("**Extract from CV**")
+        _cv_file = st.file_uploader("Upload your CV (PDF)", type=["pdf"],
+                                     label_visibility="collapsed")
+        if st.button("📄 Extract from CV", disabled=_cv_file is None):
+            with st.spinner("Reading your CV…"):
+                _extracted = read_cv(_cv_file.read())
+            if _extracted:
+                # Merge: extracted data fills empty fields; existing data is kept
+                _p = _extracted.get("personal", {})
+                for k, v in _p.items():
+                    if v and not _d["personal"].get(k):
+                        _d["personal"][k] = v
+                if _extracted.get("work_history"):
+                    _d["work_history"] = _extracted["work_history"]
+                if _extracted.get("education"):
+                    _d["education"] = _extracted["education"]
+                if _extracted.get("cpd"):
+                    _d["cpd"] = _extracted["cpd"]
+                if _extracted.get("referees"):
+                    _d["referees"] = _extracted["referees"]
+                st.session_state.profile_draft = _d
+                st.success("CV read — check the fields below and fill in any gaps.")
+                st.rerun()
+            else:
+                st.error("Could not extract data from the CV. Try a different file.")
+
+    # ── Personal Details ───────────────────────────────────────────────────────
+    with st.expander("Personal Details", expanded=True):
+        _p = _d["personal"]
+        col1, col2 = st.columns(2)
+        with col1:
+            _p["title"]     = st.selectbox("Title", ["", "Mr", "Mrs", "Ms", "Miss", "Dr", "Prof"],
+                                            index=["","Mr","Mrs","Ms","Miss","Dr","Prof"].index(_p.get("title","") or ""))
+            _p["full_name"] = st.text_input("Full name", _p.get("full_name",""))
+            _p["email"]     = st.text_input("Email", _p.get("email",""))
+            _p["phone_uk"]  = st.text_input("Phone", _p.get("phone_uk",""))
+            _p["date_of_birth"] = st.text_input("Date of birth (DD/MM/YYYY)", _p.get("date_of_birth",""))
+            _p["ni_number"] = st.text_input("NI number", _p.get("ni_number",""))
+        with col2:
+            _p["address_line_1"] = st.text_input("Address line 1", _p.get("address_line_1",""))
+            _p["address_line_2"] = st.text_input("Address line 2", _p.get("address_line_2",""))
+            _p["town_city"]  = st.text_input("Town / city", _p.get("town_city",""))
+            _p["county"]     = st.text_input("County", _p.get("county",""))
+            _p["postcode"]   = st.text_input("Postcode", _p.get("postcode",""))
+            _p["nationality"]= st.text_input("Nationality", _p.get("nationality",""))
+        _p["right_to_work"]          = st.selectbox("Right to work in the UK",
+                                                     ["", "Yes", "No"],
+                                                     index=["","Yes","No"].index(_p.get("right_to_work","") or ""))
+        _p["dbs_status"]             = st.text_input("DBS status", _p.get("dbs_status",""))
+        _p["teacher_reference_number"]= st.text_input("Teacher Reference Number (TRN)", _p.get("teacher_reference_number",""))
+        _p["qts"]                    = st.selectbox("QTS", ["", "Yes", "No", "In progress"],
+                                                     index=["","Yes","No","In progress"].index(_p.get("qts","") or ""))
+        _p["availability"]           = st.text_input("Availability / notice period", _p.get("availability",""))
+        _d["personal"] = _p
+
+    # ── Work History ───────────────────────────────────────────────────────────
+    with st.expander("Work History"):
+        for _i, _job in enumerate(_d["work_history"]):
+            with st.container(border=True):
+                _c1, _c2 = st.columns([4, 1])
+                with _c1:
+                    st.markdown(f"**Job {_i + 1}**")
+                with _c2:
+                    if st.button("Remove", key=f"rm_job_{_i}"):
+                        _d["work_history"].pop(_i)
+                        st.rerun()
+                _job["employer"] = st.text_input("Employer", _job.get("employer",""), key=f"emp_{_i}")
+                _job["title"]    = st.text_input("Job title", _job.get("title",""), key=f"jtitle_{_i}")
+                _c3, _c4 = st.columns(2)
+                with _c3:
+                    _job["start"] = st.text_input("Start", _job.get("start",""), key=f"jstart_{_i}")
+                with _c4:
+                    _job["end"]   = st.text_input("End (leave blank if current)", _job.get("end","") or "", key=f"jend_{_i}") or None
+                _duties = "\n".join(_job.get("responsibilities", []))
+                _new_duties = st.text_area("Main duties (one per line)", _duties, key=f"jduty_{_i}", height=80)
+                _job["responsibilities"] = [r.strip() for r in _new_duties.splitlines() if r.strip()]
+        if st.button("＋ Add job"):
+            _d["work_history"].append(empty_job())
+            st.rerun()
+
+    # ── Education ─────────────────────────────────────────────────────────────
+    with st.expander("Education & Qualifications"):
+        for _i, _edu in enumerate(_d["education"]):
+            with st.container(border=True):
+                _c1, _c2 = st.columns([4, 1])
+                with _c1:
+                    st.markdown(f"**Qualification {_i + 1}**")
+                with _c2:
+                    if st.button("Remove", key=f"rm_edu_{_i}"):
+                        _d["education"].pop(_i)
+                        st.rerun()
+                _c3, _c4 = st.columns(2)
+                with _c3:
+                    _edu["qualification"] = st.text_input("Qualification", _edu.get("qualification",""), key=f"eq_{_i}")
+                    _edu["institution"]   = st.text_input("Institution", _edu.get("institution",""), key=f"ei_{_i}")
+                with _c4:
+                    _edu["subject"] = st.text_input("Subject", _edu.get("subject",""), key=f"es_{_i}")
+                    _edu["grade"]   = st.text_input("Grade / class", _edu.get("grade",""), key=f"eg_{_i}")
+                _edu["end"] = st.text_input("Year awarded", _edu.get("end",""), key=f"ey_{_i}")
+        if st.button("＋ Add qualification"):
+            _d["education"].append(empty_education())
+            st.rerun()
+
+    # ── CPD ───────────────────────────────────────────────────────────────────
+    with st.expander("CPD / Training"):
+        for _i, _cpd in enumerate(_d["cpd"]):
+            with st.container(border=True):
+                _c1, _c2 = st.columns([4, 1])
+                with _c1:
+                    st.markdown(f"**Course {_i + 1}**")
+                with _c2:
+                    if st.button("Remove", key=f"rm_cpd_{_i}"):
+                        _d["cpd"].pop(_i)
+                        st.rerun()
+                _cpd["title"]    = st.text_input("Course / training title", _cpd.get("title",""), key=f"ct_{_i}")
+                _cpd["provider"] = st.text_input("Provider", _cpd.get("provider",""), key=f"cp_{_i}")
+                _cpd["date"]     = st.text_input("Date", _cpd.get("date",""), key=f"cd_{_i}")
+        if st.button("＋ Add course"):
+            _d["cpd"].append(empty_cpd())
+            st.rerun()
+
+    # ── Referees ──────────────────────────────────────────────────────────────
+    with st.expander("Referees"):
+        for _i, _ref in enumerate(_d["referees"]):
+            with st.container(border=True):
+                _c1, _c2 = st.columns([4, 1])
+                with _c1:
+                    st.markdown(f"**Referee {_i + 1}**")
+                with _c2:
+                    if st.button("Remove", key=f"rm_ref_{_i}"):
+                        _d["referees"].pop(_i)
+                        st.rerun()
+                _c3, _c4 = st.columns(2)
+                with _c3:
+                    _ref["name"]         = st.text_input("Name", _ref.get("name",""), key=f"rn_{_i}")
+                    _ref["organisation"] = st.text_input("Organisation", _ref.get("organisation",""), key=f"ro_{_i}")
+                with _c4:
+                    _ref["title"] = st.text_input("Job title", _ref.get("title",""), key=f"rt_{_i}")
+                    _ref["email"] = st.text_input("Email", _ref.get("email",""), key=f"re_{_i}")
+                _ref["phone"] = st.text_input("Phone", _ref.get("phone",""), key=f"rp_{_i}")
+        if st.button("＋ Add referee"):
+            _d["referees"].append(empty_referee())
+            st.rerun()
+
+    # ── Employment Preferences ────────────────────────────────────────────────
+    with st.expander("Employment Preferences"):
+        _prefs = _d.get("employment_preferences", {})
+        _prefs["employment_type"]  = st.selectbox("Employment type",
+                                                   ["", "Full-time", "Part-time", "Supply", "Any"],
+                                                   index=["","Full-time","Part-time","Supply","Any"].index(_prefs.get("employment_type","") or ""))
+        _prefs["contract_type"]    = st.selectbox("Contract type",
+                                                   ["", "Permanent", "Fixed-term", "Supply", "Any"],
+                                                   index=["","Permanent","Fixed-term","Supply","Any"].index(_prefs.get("contract_type","") or ""))
+        _prefs["preferred_start"]  = st.text_input("Preferred start", _prefs.get("preferred_start",""))
+        _d["employment_preferences"] = _prefs
+
+    # ── Save ──────────────────────────────────────────────────────────────────
+    st.divider()
+    if st.button("💾  Save Profile", type="primary"):
+        os.makedirs(PROFILE_DIR, exist_ok=True)
+        with open(_prof_path, "w") as _f:
+            json.dump(_d, _f, indent=2)
+        st.success("Profile saved. Switch to the Fill a Form tab to use it.")
         st.rerun()
 
-# ── Always-visible status area ────────────────────────────────────────────────
-st.divider()
+with tab_form:
+    # ── URL input ─────────────────────────────────────────────────────────────
+    st.subheader("Enter the form URL")
+    _last_url = st.session_state.get("agent_url", "")
+    with st.form("agent_form"):
+        url = st.text_input("URL", value=_last_url, label_visibility="collapsed",
+                            placeholder="https://...  or  file:///home/...")
+        agent_clicked = st.form_submit_button("🤖 Launch Agent", type="primary")
 
-progress_bar    = st.progress(0, text="Ready — waiting to launch")
-status_line     = st.empty()
+    st.caption(
+        "⚠️ Agent mode sends browser screenshots to the Claude API. "
+        "Use the mock profile when testing on unfamiliar sites."
+    )
 
-col_step, col_info = st.columns([1, 2])
-with col_step:
-    step_slot = st.empty()
-with col_info:
-    info_slot = st.empty()
-
-screenshot_slot = st.empty()   # live form view — updates each step
-next_slot       = st.empty()
-completion_slot = st.empty()
-
-# ── Render panels based on current state ─────────────────────────────────────
-result = st.session_state.get("agent_result")
-
-if result:
-    # ── Completed state ───────────────────────────────────────────────────────
-    cost = (result["tok_in"] * 5 + result["tok_out"] * 25) / 1_000_000
-
-    progress_bar.progress(1.0, text="Complete")
-
-    with step_slot.container(border=True):
-        st.metric("Progress", "✓  Complete")
-
-    with info_slot.container(border=True):
-        st.caption("**Model**")
-        st.caption("claude-opus-4-8")
-        st.caption("**Tokens sent**  |  **Est. cost**")
-        st.caption(f"{result['tok_in']:,}  |  ~${cost:.3f}")
-
-    if result.get("final_screenshot"):
-        with screenshot_slot.container():
-            st.image(
-                base64.b64decode(result["final_screenshot"]),
-                caption="Final form state — scroll to review all fields",
-                use_container_width=True,
+    if agent_clicked:
+        if not url:
+            st.error("Enter a URL first.")
+        elif TEST_MODE and not _url_allowed(url):
+            st.error(
+                f"⛔ Test mode: only approved synthetic test URLs are allowed. "
+                f"Approved domains: {', '.join(ALLOWED_DOMAINS)}"
             )
-
-    filled  = result.get("fields_filled", [])
-    skipped = result.get("fields_skipped", [])
-
-    with next_slot.container(border=True):
-        st.subheader("✓ What to do next")
-        st.markdown(
-            "<p style='font-size:1.25rem;margin:0.25rem 0 0.75rem 0'>"
-            "Please complete any gaps, supporting statements, and open-ended questions — "
-            "then click <strong>Submit Application</strong>."
-            "</p>",
-            unsafe_allow_html=True
-        )
-        if skipped:
-            st.markdown("**Fields needing your input:**")
-            for s in skipped:
-                st.markdown(f"- ⚠ {s}")
         else:
+            st.session_state.agent_run = True
+            st.session_state.agent_url = url
+            st.session_state.pop("agent_result", None)
+            st.rerun()
+
+    # ── Always-visible status area ─────────────────────────────────────────────
+    st.divider()
+
+    progress_bar    = st.progress(0, text="Ready — waiting to launch")
+    status_line     = st.empty()
+
+    col_step, col_info = st.columns([1, 2])
+    with col_step:
+        step_slot = st.empty()
+    with col_info:
+        info_slot = st.empty()
+
+    screenshot_slot = st.empty()
+    next_slot       = st.empty()
+    completion_slot = st.empty()
+
+    # ── Render panels based on current state ───────────────────────────────────
+    result = st.session_state.get("agent_result")
+
+    if result:
+        cost = (result["tok_in"] * 5 + result["tok_out"] * 25) / 1_000_000
+        progress_bar.progress(1.0, text="Complete")
+
+        with step_slot.container(border=True):
+            st.metric("Progress", "✓  Complete")
+        with info_slot.container(border=True):
+            st.caption("**Model**")
+            st.caption("claude-opus-4-8")
+            st.caption("**Tokens sent**  |  **Est. cost**")
+            st.caption(f"{result['tok_in']:,}  |  ~${cost:.3f}")
+
+        if result.get("final_screenshot"):
+            with screenshot_slot.container():
+                st.image(
+                    base64.b64decode(result["final_screenshot"]),
+                    caption="Final form state — scroll to review all fields",
+                    use_container_width=True,
+                )
+
+        filled  = result.get("fields_filled", [])
+        skipped = result.get("fields_skipped", [])
+
+        with next_slot.container(border=True):
+            st.subheader("✓ What to do next")
             st.markdown(
-                "<p style='opacity:0.65;font-size:0.9rem;margin:0'>"
-                "⚠ Check the form carefully — any open-ended sections will need your own writing."
+                "<p style='font-size:1.25rem;margin:0.25rem 0 0.75rem 0'>"
+                "Please complete any gaps, supporting statements, and open-ended questions — "
+                "then click <strong>Submit Application</strong>."
                 "</p>",
                 unsafe_allow_html=True
             )
+            if skipped:
+                st.markdown("**Fields needing your input:**")
+                for s in skipped:
+                    st.markdown(f"- ⚠ {s}")
+            else:
+                st.markdown(
+                    "<p style='opacity:0.65;font-size:0.9rem;margin:0'>"
+                    "⚠ Check the form carefully — any open-ended sections will need your own writing."
+                    "</p>",
+                    unsafe_allow_html=True
+                )
 
-    with completion_slot.container():
-        st.divider()
-        if not result["completed"]:
-            st.warning(
-                f"Agent reached the step limit ({result['n_steps']} steps) without "
-                "signalling done. The form may be partially complete."
+        with completion_slot.container():
+            st.divider()
+            if not result["completed"]:
+                st.warning(
+                    f"Agent reached the step limit ({result['n_steps']} steps) without "
+                    "signalling done. The form may be partially complete."
+                )
+            if filled:
+                with st.expander(f"✓ {len(filled)} fields filled by the agent"):
+                    for f in filled:
+                        st.markdown(f"- ✓ {f}")
+            with st.expander("Agent activity log"):
+                for s in result["steps_log"]:
+                    st.text(s)
+
+    else:
+        with step_slot.container(border=True):
+            st.metric("Progress", "—")
+        with info_slot.container(border=True):
+            st.caption("**Model**")
+            st.caption("claude-opus-4-8")
+            st.caption("**Tokens sent**  |  **Est. cost**")
+            st.caption("—  |  —")
+        with next_slot.container(border=True):
+            st.markdown(
+                "<div style='opacity:0.4'>"
+                "<p style='font-size:1.5rem;font-weight:600;margin:0 0 0.4rem 0'>What to do next</p>"
+                "<p style='font-size:1.25rem;margin:0 0 0.3rem 0'>"
+                "Please complete any gaps, supporting statements, and open-ended questions — "
+                "then click <strong>Submit Application</strong>."
+                "</p>"
+                "<p style='font-size:0.9rem;margin:0'>Available once the agent finishes.</p>"
+                "</div>",
+                unsafe_allow_html=True
             )
 
-        if filled:
-            with st.expander(f"✓ {len(filled)} fields filled by the agent"):
-                for f in filled:
-                    st.markdown(f"- ✓ {f}")
-
-        with st.expander("Agent activity log"):
-            for s in result["steps_log"]:
-                st.text(s)
-
-else:
-    # ── Idle state ────────────────────────────────────────────────────────────
-    with step_slot.container(border=True):
-        st.metric("Progress", "—")
-
-    with info_slot.container(border=True):
-        st.caption("**Model**")
-        st.caption("claude-opus-4-8")
-        st.caption("**Tokens sent**  |  **Est. cost**")
-        st.caption("—  |  —")
-
-    with next_slot.container(border=True):
-        st.markdown(
-            "<div style='opacity:0.4'>"
-            "<p style='font-size:1.5rem;font-weight:600;margin:0 0 0.4rem 0'>What to do next</p>"
-            "<p style='font-size:1.25rem;margin:0 0 0.3rem 0'>"
-            "Please complete any gaps, supporting statements, and open-ended questions — "
-            "then click <strong>Submit Application</strong>."
-            "</p>"
-            "<p style='font-size:0.9rem;margin:0'>Available once the agent finishes.</p>"
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-# ── Agent execution ───────────────────────────────────────────────────────────
+# ── Agent execution (outside tabs — runs regardless of active tab) ─────────────
 if st.session_state.get("agent_run"):
     st.session_state.agent_run = False
     target_url = st.session_state.get("agent_url", "")

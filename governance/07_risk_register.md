@@ -22,6 +22,7 @@ Status: Open / Mitigated / Accepted / Closed
 | R009 | Agent fails to navigate multi-page or dynamic forms correctly | Medium | Medium | Tested on 7 synthetic form types; real portals not yet tested | Open — by design; accepted for current phase |
 | R010 | User submits a real application with agent-filled errors | Medium | Medium | UI explicitly instructs user to review every field; agent never submits | Accepted — responsibility disclosure required in UI |
 | R011 | Once hosted, the Droplet processes real personal data without UK GDPR review | High | Low | Synthetic profiles only in test phase; DPIA required before Phase 0.3 | Open — future phase obligation |
+| R012 | User loads another person's details into their profile and uses the app to fill applications on their behalf (identity fraud / impersonation) | High | Low | No technical control currently — profile is trusted as the user's own data. Requires: terms of service requiring users confirm the data is their own; future: account-level profile binding | Open — governance response required before public launch |
 
 ---
 
