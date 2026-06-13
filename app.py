@@ -72,15 +72,6 @@ st.markdown("""
     background: rgba(255, 100, 80, 0.04) !important;
     padding: 1rem 1rem 0.5rem 1rem !important;
 }
-/* ── Tab labels — larger and bolder ────────────────────────────────────── */
-button[data-baseweb="tab"] p {
-    font-size: 1.1rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.02em !important;
-}
-button[data-baseweb="tab"][aria-selected="true"] p {
-    font-weight: 700 !important;
-}
 /* ── Clear button — red, via adjacent-sibling of marker div ────────────── */
 [data-testid="stMarkdownContainer"]:has(#profile-clear-marker)
   + [data-testid="stHorizontalBlock"] button {
@@ -95,38 +86,6 @@ button[data-baseweb="tab"][aria-selected="true"] p {
 
 st.title("AutoForm")
 
-st.markdown("""
-<div style='border-left:4px solid rgba(255,100,80,0.7);
-            background:rgba(255,100,80,0.06);
-            padding:1.1rem 1.4rem 1rem 1.4rem;
-            border-radius:0 0.5rem 0.5rem 0;
-            margin-bottom:0.75rem'>
-  <p style='font-size:1.2rem;font-weight:600;margin:0 0 0.6rem 0;line-height:1.4'>
-    Save time on every teaching job application.
-  </p>
-  <p style='font-size:1rem;margin:0 0 1rem 0;line-height:1.6;opacity:0.9'>
-    AutoForm fills in the repetitive fields — personal details, employment history,
-    qualifications, and referees — directly from your profile.
-    Supporting statements and open-ended questions are left for you to write.
-  </p>
-  <p style='font-size:0.95rem;margin:0;line-height:1.8;opacity:0.85'>
-    <strong>How to use:</strong><br>
-    &nbsp;&nbsp;① &nbsp;Go to <strong>My Profile</strong> — upload your CV or fill in your details<br>
-    &nbsp;&nbsp;② &nbsp;Paste the URL of the application form into the box below<br>
-    &nbsp;&nbsp;③ &nbsp;Click <strong>Launch Agent</strong> — the form fills automatically<br>
-    &nbsp;&nbsp;④ &nbsp;A browser window opens with the completed form — review every field<br>
-    &nbsp;&nbsp;⑤ &nbsp;Write any supporting statements, then click <strong>Submit Application</strong>
-  </p>
-</div>
-""", unsafe_allow_html=True)
-
-if TEST_MODE:
-    st.warning(
-        "🔒 **Test mode** — synthetic forms only · no real applications · "
-        "no automatic submission",
-        icon=None
-    )
-
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.header("Your Profile")
@@ -135,6 +94,9 @@ with st.sidebar:
         st.error("No profiles found in the profile/ folder.")
         st.stop()
     selected_name = st.selectbox("Select profile", list(available.keys()))
+    if st.button("✏️ Edit Profile", use_container_width=True):
+        st.session_state.page = "profile"
+        st.rerun()
     profile = load_profile(available[selected_name])
     p = profile["personal"]
     st.markdown(f"### {p['full_name']}")
@@ -173,10 +135,13 @@ def _match_opt(raw: str, options: list) -> str:
     return ""
 
 
-# ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_profile, tab_form = st.tabs(["👤  My Profile", "🤖  Fill a Form"])
+# ── Page routing ──────────────────────────────────────────────────────────────
+_page = st.session_state.get("page", "form")
 
-with tab_profile:
+if _page == "profile":
+    if st.button("← Back to form"):
+        st.session_state.page = "form"
+        st.rerun()
     _prof_path = os.path.join(PROFILE_DIR, "user_profile.json")
 
     # ── Initialise draft in session state ─────────────────────────────────────
@@ -218,19 +183,22 @@ with tab_profile:
     with st.container(border=True):
         st.markdown("**Extract from CV**")
         st.info(
-            "**Before you upload:** Your CV — including name, address, NI number, employment "
-            "history, and any DBS or referee details — will be sent to Anthropic's Claude API "
-            "for extraction. Anthropic states that API data is not used for model training by "
-            "default, and is deleted from their systems within 30 days by default (subject to "
-            "their stated exceptions). AutoForm does not store your CV file. Only the extracted "
-            "text fields on this page are saved locally on your device. "
-            "Use **🗑 Clear** above to remove all saved data at any time.\n\n"
-            "⚠️ **During test mode: upload mock CVs only. Do not upload a real CV.**"
+            "Your CV — including name, address, NI number, employment history, and any DBS or "
+            "referee details — will be sent to Anthropic's Claude API for extraction. "
+            "Anthropic states that commercial API data is not used for model training by default, "
+            "and that API/screenshot data is generally deleted within 30 days by default, subject "
+            "to Anthropic's terms, exceptions, and service-specific arrangements. "
+            "AutoForm does not store your CV file. Only the extracted text fields on this page "
+            "are saved locally on your device."
+        )
+        _cv_acknowledged = st.checkbox(
+            "I understand this CV/profile will be sent to Anthropic's API. "
+            "I confirm this is a **mock CV** during test mode."
         )
         _cv_file = st.file_uploader("Upload your CV (PDF or Word .docx)", type=["pdf", "docx"],
                                      label_visibility="collapsed",
                                      key=f"cv_upload_{st.session_state.get('cv_uploader_key', 0)}")
-        if st.button("📄 Extract from CV", disabled=_cv_file is None):
+        if st.button("📄 Extract from CV", disabled=(_cv_file is None or not _cv_acknowledged)):
             with st.spinner("Reading your CV…"):
                 _cv_bytes = _cv_file.read()
                 if _cv_file.name.lower().endswith(".docx"):
@@ -397,7 +365,37 @@ with tab_profile:
         st.session_state.profile_just_saved = True
         st.rerun()
 
-with tab_form:
+else:
+    st.markdown("""
+<div style='border-left:4px solid rgba(255,100,80,0.7);
+            background:rgba(255,100,80,0.06);
+            padding:1.1rem 1.4rem 1rem 1.4rem;
+            border-radius:0 0.5rem 0.5rem 0;
+            margin-bottom:0.75rem'>
+  <p style='font-size:1.2rem;font-weight:600;margin:0 0 0.6rem 0;line-height:1.4'>
+    Save time on every teaching job application.
+  </p>
+  <p style='font-size:1rem;margin:0 0 1rem 0;line-height:1.6;opacity:0.9'>
+    AutoForm fills in the repetitive fields — personal details, employment history,
+    qualifications, and referees — directly from your profile.
+    Supporting statements and open-ended questions are left for you to write.
+  </p>
+  <p style='font-size:0.95rem;margin:0;line-height:1.8;opacity:0.85'>
+    <strong>How to use:</strong><br>
+    &nbsp;&nbsp;① &nbsp;Click <strong>Edit Profile</strong> in the sidebar — upload your CV or fill in your details<br>
+    &nbsp;&nbsp;② &nbsp;Paste the URL of the application form into the box below<br>
+    &nbsp;&nbsp;③ &nbsp;Click <strong>Launch Agent</strong> — the form fills automatically<br>
+    &nbsp;&nbsp;④ &nbsp;A browser window opens with the completed form — review every field<br>
+    &nbsp;&nbsp;⑤ &nbsp;Write any supporting statements, then click <strong>Submit Application</strong>
+  </p>
+</div>
+""", unsafe_allow_html=True)
+    if TEST_MODE:
+        st.warning(
+            "🔒 **Test mode** — synthetic forms only · no real applications · "
+            "no automatic submission",
+            icon=None
+        )
     # ── URL input ─────────────────────────────────────────────────────────────
     st.subheader("Enter the form URL")
     _last_url = st.session_state.get("agent_url", "")
