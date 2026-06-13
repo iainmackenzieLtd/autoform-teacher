@@ -377,6 +377,30 @@ if st.session_state.get("agent_run"):
 
             # ── Phase 2: visible review window ────────────────────────────
             if completed:
+                # Update 'What to do next' NOW — fields_skipped is available and
+                # the visible browser is about to open, so the user can see the
+                # list while they're filling in the form.
+                with next_slot.container(border=True):
+                    st.subheader("✓ What to do next")
+                    st.markdown(
+                        "<p style='font-size:1.25rem;margin:0.25rem 0 0.75rem 0'>"
+                        "Please complete any gaps, supporting statements, and open-ended questions — "
+                        "then click <strong>Submit Application</strong>."
+                        "</p>",
+                        unsafe_allow_html=True
+                    )
+                    if fields_skipped:
+                        st.markdown("**Fields needing your input:**")
+                        for s in fields_skipped:
+                            st.markdown(f"- ⚠ {s}")
+                    else:
+                        st.markdown(
+                            "<p style='opacity:0.65;font-size:0.9rem;margin:0'>"
+                            "⚠ Check the form carefully — any open-ended sections will need your own writing."
+                            "</p>",
+                            unsafe_allow_html=True
+                        )
+
                 status_line.caption(
                     "✓ Agent finished — a browser window will open with the completed form. "
                     "Review every field, then click Submit. Close the window when done."
