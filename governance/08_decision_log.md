@@ -78,4 +78,12 @@ Key decisions made during the AutoForm build, and why. Useful when memory gets f
 
 ---
 
+## D011 — Two-phase browser pattern for headless fill + visible review
+**Date:** 2026-06-13
+**Decision:** Phase 1: headless Playwright fills the form while screenshots stream into Streamlit. Before closing, JavaScript harvests all field values into a dict. Phase 2: a visible browser opens the same URL, and JS injects the harvested values back in, firing input/change/blur events. The user reviews the restored form and submits manually.
+**Why:** Headless mode gives a clean streaming UI without an OS window cluttering the screen. But the filled data lives in the headless browser's DOM — closing it loses everything. Harvesting values then restoring them in a visible window solves both goals: clean UI during fill, submittable form at the end.
+**Trade-off:** Values are injected via JavaScript, not typed by the agent. This works for most forms but may not trigger all JS framework reactivity (e.g. React controlled components). Tested and confirmed working on all 7 synthetic test forms.
+
+---
+
 *Add new entries here as significant decisions are made.*
