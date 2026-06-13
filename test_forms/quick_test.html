@@ -42,6 +42,17 @@
 <label for="supporting_statement">Supporting statement (leave blank — write this yourself)</label>
 <textarea id="supporting_statement" name="supporting_statement" rows="4"></textarea>
 
-<button type="submit">Submit Application</button>
+<button type="button" id="submit_btn" onclick="handleSubmit()">Submit Application</button>
+<p id="confirm_msg" style="display:none;margin-top:1rem;padding:12px;background:#d4edda;color:#155724;border-radius:4px;font-weight:bold;">
+  ✓ Application submitted successfully. You will receive a confirmation email shortly.
+</p>
+<script>
+function handleSubmit() {
+  document.getElementById('submit_btn').disabled = true;
+  document.getElementById('submit_btn').textContent = '✓ Submitted';
+  document.getElementById('submit_btn').style.background = '#28a745';
+  document.getElementById('confirm_msg').style.display = 'block';
+}
+</script>
 </body>
 </html>
