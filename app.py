@@ -420,7 +420,10 @@ else:
     _ready_html = (st.session_state.get("agent_result") or {}).get("filled_html")
     with st.container(border=True):
         st.markdown(
-            "<style>div[data-testid='stDownloadButton']>button{text-align:left;}</style>",
+            "<style>"
+            "div[data-testid='stDownloadButton']>button{text-align:left !important;justify-content:flex-start !important;}"
+            "div[data-testid='stDownloadButton']>button p{text-align:left !important;}"
+            "</style>",
             unsafe_allow_html=True,
         )
         st.download_button(
