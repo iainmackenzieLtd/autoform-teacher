@@ -1,0 +1,10 @@
+.env
+profile/user_profile.json
+profile/approval.json
+profile/*.pdf
+Iain CV/
+__pycache__/
+**/__pycache__/
+*.pyc
+.git/
+test_forms.zip
