@@ -217,10 +217,15 @@ with tab_profile:
     # ── CV Upload ──────────────────────────────────────────────────────────────
     with st.container(border=True):
         st.markdown("**Extract from CV**")
-        st.caption(
-            "Your CV is sent to Claude to extract the fields below — it is not stored anywhere "
-            "by AutoForm. Once extracted, only the text fields on this page are saved locally "
-            "on your device. Use the **🗑 Clear** button above to remove all saved data."
+        st.info(
+            "**Before you upload:** Your CV — including name, address, NI number, employment "
+            "history, and any DBS or referee details — will be sent to Anthropic's Claude API "
+            "for extraction. Anthropic states that API data is not used for model training by "
+            "default, and is deleted from their systems within 30 days by default (subject to "
+            "their stated exceptions). AutoForm does not store your CV file. Only the extracted "
+            "text fields on this page are saved locally on your device. "
+            "Use **🗑 Clear** above to remove all saved data at any time.\n\n"
+            "⚠️ **During test mode: upload mock CVs only. Do not upload a real CV.**"
         )
         _cv_file = st.file_uploader("Upload your CV (PDF or Word .docx)", type=["pdf", "docx"],
                                      label_visibility="collapsed",

@@ -24,8 +24,18 @@ Status: Open / Mitigated / Accepted / Closed
 | R011 | Once hosted, the Droplet processes real personal data without UK GDPR review | High | Low | Synthetic profiles only in test phase; DPIA required before Phase 0.3 | Open — future phase obligation |
 | R012 | User loads another person's details into their profile and uses the app to fill applications on their behalf (identity fraud / impersonation) | High | Low | No technical control currently — profile is trusted as the user's own data. Requires: terms of service requiring users confirm the data is their own; future: account-level profile binding | Open — governance response required before public launch |
 
+| R013 | Full CV extraction sends complete sensitive applicant document to Anthropic API — including NI, DOB, DBS, TRN, referee details, and potentially health/disability/gap information | High | Medium | Add pre-upload disclosure (see app.py profile tab); synthetic CVs only in test mode; Anthropic API data not used for training by default and deleted within 30 days by default (subject to exceptions — see Anthropic Privacy Center); DPIA required before real-user deployment | Open |
+| R014 | On hosted deployment (Droplet), user_profile.json would be stored on server disk, not just local machine — changes the risk profile materially | High | Medium | Synthetic profiles only during droplet testing; no real CVs or applicant data on server; review file permissions and logging before Phase 0.2; consider per-session-only storage model | Open |
+| R015 | Teacher job applications may involve special category data (health, disability, criminal records, DBS, vetting declarations) under UK GDPR Articles 9 and 10 — higher bar than ordinary personal data | High | Low | No real sensitive/special category data in current phase; mock profiles only; legal/privacy review and DPIA required before processing real applicant data; do not extend form-filling to vetting forms without separate review | Open |
+
 ---
 
 ## Next review
 
-Before Phase 0.2 (Droplet deployment): close or formally accept R003, R004, R006, R007.
+Before Phase 0.2 (Droplet deployment): close or formally accept R003, R004, R006, R007, R013, R014.
+
+Before any real-user deployment: R011, R012, R015, and a full DPIA.
+
+## Submit-blocking — code-level confirmation
+
+The submit action is blocked in `agents/form_agent.py` in `_execute_actions()`. The check occurs at action execution time (not prompt level only) — any action whose type resolves to a submit/send/apply button is skipped and logged. This should be formally regression-tested against button labels: Submit, Send, Apply, Finish Application, Complete, Finalise, Confirm before Phase 0.2.
