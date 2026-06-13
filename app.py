@@ -204,6 +204,7 @@ with tab_profile:
         if st.button("🗑 Clear", help="Remove all saved data and start fresh",
                      use_container_width=True):
             st.session_state.profile_draft = empty_profile()
+            st.session_state.cv_uploader_key = st.session_state.get("cv_uploader_key", 0) + 1
             if os.path.exists(_prof_path):
                 os.remove(_prof_path)
             st.rerun()
@@ -222,7 +223,8 @@ with tab_profile:
             "on your device. Use the **🗑 Clear** button above to remove all saved data."
         )
         _cv_file = st.file_uploader("Upload your CV (PDF or Word .docx)", type=["pdf", "docx"],
-                                     label_visibility="collapsed")
+                                     label_visibility="collapsed",
+                                     key=f"cv_upload_{st.session_state.get('cv_uploader_key', 0)}")
         if st.button("📄 Extract from CV", disabled=_cv_file is None):
             with st.spinner("Reading your CV…"):
                 _cv_bytes = _cv_file.read()
