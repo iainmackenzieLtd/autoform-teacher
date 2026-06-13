@@ -3,7 +3,7 @@ Form Agent — visual form filling using Claude vision + Playwright.
 
 Instead of the deprecated computer_20241022 beta tool, this agent:
   1. Takes a Playwright screenshot
-  2. Sends it to Claude as a regular image (vision API, claude-opus-4-8)
+  2. Sends it to Claude as a regular image (vision API, claude-sonnet-4-6)
   3. Claude returns a JSON list of actions: click (x,y), type text, scroll
   4. Playwright executes each action
   5. Repeat until Claude returns {action: done}
@@ -302,7 +302,9 @@ Available actions:
 IMPORTANT: For any <select> dropdown, ALWAYS use select_option — never click to open a dropdown.
 The select_option action sets the value directly and reliably without opening a visual menu."""
 
-    messages = []  # Full conversation history so Claude remembers previous steps
+    # Text-only log of completed actions — sent as context each step instead of
+    # accumulating all screenshots, which would make cost grow quadratically.
+    action_log = []
     steps_taken = 0
     completed = False
     done_reason = ""
@@ -319,38 +321,39 @@ The select_option action sets the value directly and reliably without opening a 
         if on_screenshot:
             on_screenshot(screenshot_data)
 
-        messages.append({
-            "role": "user",
-            "content": [
-                {
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": "image/png",
-                        "data": screenshot_data
-                    }
-                },
-                {
-                    "type": "text",
-                    "text": (
-                        f"Step {step + 1} of {max_steps}. This is the current state of the browser. "
-                        "Check what you have already done above, then return JSON actions "
-                        "for the next thing to fill. When you have filled everything visible "
-                        "and scrolled to the bottom, return [{\"action\": \"done\", \"reason\": \"...\"}]."
-                    )
-                }
-            ]
-        })
-
-        response = _client.messages.create(
-            model="claude-opus-4-8",
-            max_tokens=2048,
-            system=system,
-            messages=messages
+        history = (
+            "Actions completed so far:\n" + "\n".join(f"- {a}" for a in action_log)
+            if action_log else "No actions taken yet."
         )
 
-        # Add assistant reply to history so Claude remembers it next step
-        messages.append({"role": "assistant", "content": response.content})
+        response = _client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=2048,
+            system=system,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/png",
+                            "data": screenshot_data
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": (
+                            f"Step {step + 1} of {max_steps}. This is the current state of the browser.\n\n"
+                            f"{history}\n\n"
+                            "Return JSON actions for the next thing to fill. "
+                            "When you have filled everything visible and scrolled to the bottom, "
+                            "return [{\"action\": \"done\", \"reason\": \"...\"}]."
+                        )
+                    }
+                ]
+            }]
+        )
         total_input_tokens  += response.usage.input_tokens
         total_output_tokens += response.usage.output_tokens
         if on_tokens:
@@ -375,6 +378,7 @@ The select_option action sets the value directly and reliably without opening a 
 
         descriptions, done = _execute_actions(page, actions)
         steps_taken = step + 1
+        action_log.extend(descriptions)
 
         if on_step:
             for desc in descriptions:

@@ -19,7 +19,7 @@ from agents.profile_reader import (
 )
 
 PROFILE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "profile")
-MAX_STEPS   = 30
+MAX_STEPS   = 50
 
 # ── Governance: phase-controlled URL access ───────────────────────────────────
 # TEST_MODE restricts the agent to approved synthetic test URLs only.
@@ -89,33 +89,33 @@ st.title("AutoForm")
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.header("Your Profile")
-    available = discover_profiles()
-    if not available:
-        st.error("No profiles found in the profile/ folder.")
-        st.stop()
-    selected_name = st.selectbox("Select profile", list(available.keys()))
     if st.button("✏️ Edit Profile", use_container_width=True):
         st.session_state.page = "profile"
         st.rerun()
-    profile = load_profile(available[selected_name])
-    p = profile["personal"]
-    st.markdown(f"### {p['full_name']}")
-    st.write(p["email"])
-    st.write(p.get("phone_uk", ""))
-    st.write(p.get("location_current", ""))
+    _prof_sidebar_path = os.path.join(PROFILE_DIR, "user_profile.json")
+    if os.path.exists(_prof_sidebar_path):
+        profile = load_profile(_prof_sidebar_path)
+        p = profile["personal"]
+        st.markdown(f"### {p['full_name']}")
+        st.write(p["email"])
+        st.write(p.get("phone_uk", ""))
+        st.write(p.get("location_current", ""))
 
-    st.divider()
-    st.subheader("Work History")
-    for job in profile["work_history"]:
-        end = job["end"] or "Present"
-        st.markdown(f"**{job['employer']}**")
-        st.caption(f"{job['title']} · {job['start']}–{end}")
+        st.divider()
+        st.subheader("Work History")
+        for job in profile["work_history"]:
+            end = job["end"] or "Present"
+            st.markdown(f"**{job['employer']}**")
+            st.caption(f"{job['title']} · {job['start']}–{end}")
 
-    st.divider()
-    st.subheader("Education")
-    for edu in profile["education"]:
-        st.markdown(f"**{edu['qualification']} {edu['subject']}**")
-        st.caption(edu["institution"])
+        st.divider()
+        st.subheader("Education")
+        for edu in profile["education"]:
+            st.markdown(f"**{edu['qualification']} {edu['subject']}**")
+            st.caption(edu["institution"])
+    else:
+        profile = None
+        st.info("No profile saved yet — click Edit Profile to get started.")
 
 def _match_opt(raw: str, options: list) -> str:
     """Map a raw extracted value to the nearest dropdown option, or '' if none fits."""
@@ -139,10 +139,13 @@ def _match_opt(raw: str, options: list) -> str:
 _page = st.session_state.get("page", "form")
 
 if _page == "profile":
-    if st.button("← Back to form"):
+    _prof_path = os.path.join(PROFILE_DIR, "user_profile.json")
+    if st.button("💾 Save Profile & Return to Form", type="primary"):
+        os.makedirs(PROFILE_DIR, exist_ok=True)
+        with open(_prof_path, "w") as _f:
+            json.dump(st.session_state.profile_draft, _f, indent=2)
         st.session_state.page = "form"
         st.rerun()
-    _prof_path = os.path.join(PROFILE_DIR, "user_profile.json")
 
     # ── Initialise draft in session state ─────────────────────────────────────
     if "profile_draft" not in st.session_state:
@@ -408,10 +411,17 @@ else:
         "⚠️ Agent mode sends browser screenshots to the Claude API. "
         "Use the mock profile when testing on unfamiliar sites."
     )
+    _active_name = (profile or {}).get("personal", {}).get("full_name", "")
+    if _active_name:
+        st.caption(f"👤 Active profile: **{_active_name}**")
+    else:
+        st.warning("⚠️ No profile saved — go to Edit Profile before launching.")
 
     if agent_clicked:
         if not url:
             st.error("Enter a URL first.")
+        elif not profile:
+            st.error("⚠️ No profile saved — go to Edit Profile first.")
         elif TEST_MODE and not _url_allowed(url):
             st.error(
                 f"⛔ Test mode: only approved synthetic test URLs are allowed. "
@@ -450,7 +460,7 @@ else:
             st.metric("Progress", "✓  Complete")
         with info_slot.container(border=True):
             st.caption("**Model**")
-            st.caption("claude-opus-4-8")
+            st.caption("claude-sonnet-4-6")
             st.caption("**Tokens sent**  |  **Est. cost**")
             st.caption(f"{result['tok_in']:,}  |  ~${cost:.3f}")
 
@@ -506,7 +516,7 @@ else:
             st.metric("Progress", "—")
         with info_slot.container(border=True):
             st.caption("**Model**")
-            st.caption("claude-opus-4-8")
+            st.caption("claude-sonnet-4-6")
             st.caption("**Tokens sent**  |  **Est. cost**")
             st.caption("—  |  —")
         with next_slot.container(border=True):
@@ -540,7 +550,7 @@ if st.session_state.get("agent_run"):
                 st.metric("Progress", f"{pct}%", delta="Running")
         with info_slot.container(border=True):
             st.caption("**Model**")
-            st.caption("claude-opus-4-8")
+            st.caption("claude-sonnet-4-6")
             st.caption("**Tokens sent**  |  **Est. cost**")
             tok_str  = f"{state['tok_in']:,}" if state['tok_in'] else "—"
             cost_str = f"~${cost:.3f}"        if state['tok_in'] else "—"
@@ -592,7 +602,7 @@ if st.session_state.get("agent_run"):
         st.metric("Progress", "Starting…")
     with info_slot.container(border=True):
         st.caption("**Model**")
-        st.caption("claude-opus-4-8")
+        st.caption("claude-sonnet-4-6")
         st.caption("**Tokens sent**  |  **Est. cost**")
         st.caption("—  |  —")
 
