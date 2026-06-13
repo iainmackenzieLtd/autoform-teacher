@@ -167,7 +167,7 @@ if result:
     progress_bar.progress(1.0, text="Complete")
 
     with step_slot.container(border=True):
-        st.metric("Step", "✓  Complete", delta=f"{result['n_steps']} steps used")
+        st.metric("Progress", "✓  Complete")
 
     with info_slot.container(border=True):
         st.caption("**Model**")
@@ -190,8 +190,7 @@ if result:
             "<p style='font-size:1.25rem;margin:0.25rem 0 0.5rem 0'>"
             "Please complete any gaps, supporting statements, and open-ended questions — "
             "then click <strong>Submit Application</strong>."
-            "</p>"
-            f"<small>If you closed the browser window: <a href='{form_url}'>{form_url}</a></small>",
+            "</p>",
             unsafe_allow_html=True
         )
 
@@ -230,7 +229,7 @@ if result:
 else:
     # ── Idle state ────────────────────────────────────────────────────────────
     with step_slot.container(border=True):
-        st.metric("Step", f"— / {MAX_STEPS}")
+        st.metric("Progress", "—")
 
     with info_slot.container(border=True):
         st.caption("**Model**")
@@ -263,9 +262,10 @@ if st.session_state.get("agent_run"):
         cost = (state["tok_in"] * 5 + state["tok_out"] * 25) / 1_000_000
         with step_slot.container(border=True):
             if not running:
-                st.metric("Step", "✓  Complete", delta=f"{state['step']} steps used")
+                st.metric("Progress", "✓  Complete")
             else:
-                st.metric("Step", f"{state['step']} / {MAX_STEPS}", delta="Running")
+                pct = int(state['step'] / MAX_STEPS * 100)
+                st.metric("Progress", f"{pct}%", delta="Running")
         with info_slot.container(border=True):
             st.caption("**Model**")
             st.caption("claude-opus-4-8")
@@ -291,8 +291,7 @@ if st.session_state.get("agent_run"):
                     "<p style='font-size:1.25rem;margin:0.25rem 0 0.5rem 0'>"
                     "Please complete any gaps, supporting statements, and open-ended questions — "
                     "then click <strong>Submit Application</strong>."
-                    "</p>"
-                    f"<small>If you closed the browser window: <a href='{target_url}'>{target_url}</a></small>",
+                    "</p>",
                     unsafe_allow_html=True
                 )
             done_reason_live = desc[5:].lstrip("—").strip()
@@ -323,7 +322,7 @@ if st.session_state.get("agent_run"):
     # Show starting state before first step fires
     progress_bar.progress(0, text="Starting…")
     with step_slot.container(border=True):
-        st.metric("Step", "Starting…")
+        st.metric("Progress", "Starting…")
     with info_slot.container(border=True):
         st.caption("**Model**")
         st.caption("claude-opus-4-8")
