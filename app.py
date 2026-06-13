@@ -506,6 +506,7 @@ else:
                     mime="text/html",
                     help="Open this file in your browser — all fields will be pre-filled. Complete the writing sections, then click Submit.",
                     use_container_width=True,
+                    type="primary",
                 )
             if not result["completed"]:
                 st.warning(
