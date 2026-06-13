@@ -418,14 +418,19 @@ else:
         st.warning("⚠️ No profile saved — go to Edit Profile before launching.")
 
     _ready_html = (st.session_state.get("agent_result") or {}).get("filled_html")
-    st.download_button(
-        "📥 Download filled form",
-        data=_ready_html if _ready_html else b"",
-        file_name="filled_form.html",
-        mime="text/html",
-        use_container_width=True,
-        disabled=not bool(_ready_html),
-    )
+    with st.container(border=True):
+        st.markdown(
+            "<style>div[data-testid='stDownloadButton']>button{text-align:left;}</style>",
+            unsafe_allow_html=True,
+        )
+        st.download_button(
+            "📥 Download filled form",
+            data=_ready_html if _ready_html else b"",
+            file_name="filled_form.html",
+            mime="text/html",
+            use_container_width=True,
+            disabled=not bool(_ready_html),
+        )
 
     if agent_clicked:
         if not url:
