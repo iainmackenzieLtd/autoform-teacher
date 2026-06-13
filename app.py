@@ -666,54 +666,61 @@ if st.session_state.get("agent_run"):
                             unsafe_allow_html=True
                         )
 
-                status_line.caption(
-                    "✓ Agent finished — a browser window will open with the completed form. "
-                    "Review every field, then click Submit. Close the window when done."
-                )
-                vis_browser = pw.chromium.launch(
-                    headless=False,
-                    args=["--window-size=1100,900", "--window-position=200,30"]
-                )
-                vis_ctx  = vis_browser.new_context(viewport={"width": 1100, "height": 900})
-                vis_page = vis_ctx.new_page()
-                vis_page.goto(target_url, wait_until="networkidle")
+                _in_docker = os.path.exists("/.dockerenv")
+                if _in_docker:
+                    status_line.caption(
+                        "✓ Agent finished — running on server, no browser window available. "
+                        "Review the completed fields in the report above."
+                    )
+                else:
+                    status_line.caption(
+                        "✓ Agent finished — a browser window will open with the completed form. "
+                        "Review every field, then click Submit. Close the window when done."
+                    )
+                    vis_browser = pw.chromium.launch(
+                        headless=False,
+                        args=["--window-size=1100,900", "--window-position=200,30"]
+                    )
+                    vis_ctx  = vis_browser.new_context(viewport={"width": 1100, "height": 900})
+                    vis_page = vis_ctx.new_page()
+                    vis_page.goto(target_url, wait_until="networkidle")
 
-                # Restore all harvested values
-                vis_page.evaluate("""(values) => {
-                    Object.entries(values).forEach(([key, val]) => {
-                        let el = document.getElementById(key)
-                               || document.querySelector(`[name="${key}"]`);
-                        if (!el) return;
-                        if (el.tagName === 'SELECT') {
-                            el.value = val;
-                            el.dispatchEvent(new Event('change', {bubbles: true}));
-                        } else if (el.type === 'radio') {
-                            const r = document.querySelector(
-                                `input[name="${el.name}"][value="${val}"]`);
-                            if (r) { r.checked = true;
-                                     r.dispatchEvent(new Event('change', {bubbles: true})); }
-                        } else if (el.type === 'checkbox') {
-                            el.checked = true;
-                            el.dispatchEvent(new Event('change', {bubbles: true}));
-                        } else {
-                            el.value = val;
-                            el.dispatchEvent(new Event('input',  {bubbles: true}));
-                            el.dispatchEvent(new Event('change', {bubbles: true}));
-                            el.dispatchEvent(new Event('blur',   {bubbles: true}));
-                        }
-                    });
-                }""", field_values)
+                    # Restore all harvested values
+                    vis_page.evaluate("""(values) => {
+                        Object.entries(values).forEach(([key, val]) => {
+                            let el = document.getElementById(key)
+                                   || document.querySelector(`[name="${key}"]`);
+                            if (!el) return;
+                            if (el.tagName === 'SELECT') {
+                                el.value = val;
+                                el.dispatchEvent(new Event('change', {bubbles: true}));
+                            } else if (el.type === 'radio') {
+                                const r = document.querySelector(
+                                    `input[name="${el.name}"][value="${val}"]`);
+                                if (r) { r.checked = true;
+                                         r.dispatchEvent(new Event('change', {bubbles: true})); }
+                            } else if (el.type === 'checkbox') {
+                                el.checked = true;
+                                el.dispatchEvent(new Event('change', {bubbles: true}));
+                            } else {
+                                el.value = val;
+                                el.dispatchEvent(new Event('input',  {bubbles: true}));
+                                el.dispatchEvent(new Event('change', {bubbles: true}));
+                                el.dispatchEvent(new Event('blur',   {bubbles: true}));
+                            }
+                        });
+                    }""", field_values)
 
-                # Wait for user to review and close the window
-                status_line.caption(
-                    "⏳ Browser window open — complete your writing sections, submit, then close the window."
-                )
-                try:
-                    vis_page.wait_for_event("close", timeout=0)
-                except Exception:
-                    pass
-                vis_browser.close()
-                status_line.caption("✓ Review window closed.")
+                    # Wait for user to review and close the window
+                    status_line.caption(
+                        "⏳ Browser window open — complete your writing sections, submit, then close the window."
+                    )
+                    try:
+                        vis_page.wait_for_event("close", timeout=0)
+                    except Exception:
+                        pass
+                    vis_browser.close()
+                    status_line.caption("✓ Review window closed.")
 
         st.session_state.agent_result = {
             "n_steps":          n_steps,
