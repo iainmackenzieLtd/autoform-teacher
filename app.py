@@ -63,6 +63,12 @@ st.markdown("""
 [data-testid="stMetricDelta"]  { font-size: 0.95rem !important; }
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] li { font-size: 0.95rem !important; }
+[data-testid="stForm"] {
+    border: 2px solid rgba(255, 100, 80, 0.55) !important;
+    border-radius: 0.5rem !important;
+    background: rgba(255, 100, 80, 0.04) !important;
+    padding: 1rem 1rem 0.5rem 1rem !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -234,9 +240,13 @@ else:
 
     with next_slot.container(border=True):
         st.markdown(
-            "<div style='opacity:0.35'>"
-            "<span style='font-size:1.25rem;font-weight:600'>What to do next</span>"
-            " — the review window will open automatically when the agent finishes."
+            "<div style='opacity:0.4'>"
+            "<p style='font-size:1.5rem;font-weight:600;margin:0 0 0.4rem 0'>What to do next</p>"
+            "<p style='font-size:1.25rem;margin:0 0 0.3rem 0'>"
+            "Please complete any gaps, supporting statements, and open-ended questions — "
+            "then click <strong>Submit Application</strong>."
+            "</p>"
+            "<p style='font-size:0.9rem;margin:0'>Available once the agent finishes.</p>"
             "</div>",
             unsafe_allow_html=True
         )
